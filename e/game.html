@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oyna | Retro Arcade Hub</title>
+    <link rel="stylesheet" href="style.css?v=2.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        html, body { background: #000 !important; overflow: hidden !important; }
+        .container.game-container { max-width: none !important; width: 98% !important; padding: 0 !important; margin: 0 auto !important; }
+        .game-viewport { max-width: none !important; width: 100% !important; aspect-ratio: auto !important; height: 85vh !important; }
+    </style>
+    <!-- THEME BOOTSTRAPPER (Prevents Flickering) -->
+    <script>
+        const cachedTheme = localStorage.getItem('retroArcade_cachedTheme');
+        if (cachedTheme) {
+            document.documentElement.className = 'theme-' + cachedTheme;
+            document.addEventListener('DOMContentLoaded', () => {
+                document.body.className = 'theme-' + cachedTheme;
+            });
+        }
+    </script>
+</head>
+<body>
+    <!-- Professional Splash Screen -->
+    <div id="splash-screen">
+        <div class="splash-content">
+            <div class="logo-big pulse">RETRO ARCADE HUB</div>
+            <div class="loader-line"></div>
+            <p>OYUN YÜKLENİYOR...</p>
+        </div>
+    </div>
+
+    <nav>
+        <div class="container nav-content">
+            <div class="logo"><a href="index.html" style="text-decoration: none; color: inherit;">Retro Arcade Hub</a></div>
+            
+            <div class="user-stats">
+                <div class="xp-container">
+                    <span class="level-label">LVL 1</span>
+                    <div class="xp-bar-bg"><div class="xp-bar-fill" style="width: 0%;"></div></div>
+                </div>
+                <div class="tokens">
+                    🪙 0
+                </div>
+            </div>
+
+            <ul class="nav-links">
+                <li><a href="index.html">Ana Sayfa</a></li>
+                <li><a href="about.html">Hakkımızda</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- System Announcement Bar -->
+    <div id="announcement-bar" class="announcement-bar" style="display: none;">
+        <div class="container">
+            <span id="announcement-text"></span>
+        </div>
+    </div>
+
+    <!-- HIGH VISIBILITY AD (Top Banner) -->
+    <div class="container" style="margin-top: 1rem;">
+        <div class="ad-placeholder banner-ad-thin">
+            Google AdSense - 970x90 (Premium Leaderboard Ad)
+        </div>
+    </div>
+
+    <div class="container game-container">
+        <div class="game-header">
+            <h1 id="game-title" class="pulse">Oyun Yükleniyor...</h1>
+            <p id="game-subtitle" style="color: var(--text-dim);">Lütfen bekleyin...</p>
+        </div>
+
+        <!-- Game Viewport -->
+        <div class="game-viewport">
+            <div id="game-canvas-container" style="width: 100%; height: 100%;"></div>
+            
+            <!-- Rotate Device Overlay -->
+            <div id="rotate-overlay" class="rotate-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #fff;">
+                <div style="font-size: 4rem; margin-bottom: 20px;">📱🔄</div>
+                <h2 style="color: var(--neon-blue);">LÜTFEN CİHAZI YAN ÇEVİRİN</h2>
+                <p style="color: var(--text-dim);">Bu oyun en iyi deneyim için yatay modda çalışır.</p>
+            </div>
+
+            <script>
+                function checkOrientation() {
+                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    if (!isMobile) return;
+
+                    const currentGame = localStorage.getItem('retroArcade_currentGame');
+                    const isTetris = currentGame === 'tetris-pro';
+                    const rotateOverlay = document.getElementById('rotate-overlay');
+
+                    if (!isTetris && window.innerHeight > window.innerWidth) {
+                        rotateOverlay.style.display = 'flex';
+                    } else {
+                        rotateOverlay.style.display = 'none';
+                    }
+                }
+                window.addEventListener('resize', checkOrientation);
+                window.addEventListener('load', checkOrientation);
+            </script>
+
+            <!-- Pause UI (Hidden by default) -->
+            <button id="pause-game-btn" class="pause-btn">DURDUR</button>
+
+            <!-- Mobile Controls -->
+            <div class="mobile-controls">
+                <div class="control-group">
+                    <button id="btn-left" class="control-btn">←</button>
+                    <button id="btn-right" class="control-btn">→</button>
+                </div>
+                <button id="btn-fire" class="control-btn fire-btn">ATEŞ</button>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; margin-top: 15px; gap: 10px;">
+            <button onclick="location.reload()" style="background: var(--card-bg); border: 1px solid var(--neon-blue); color: var(--neon-blue); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: bold; transition: 0.3s; box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);">
+                🔄 Yeniden Başlat
+            </button>
+        </div>
+
+        <!-- 3-Column Balanced Layout -->
+        <div class="game-info-grid">
+            <!-- Left: Instructions -->
+            <div class="info-panel">
+                <h3 style="color: var(--neon-green); margin-bottom: 1rem;">🕹️ Nasıl Oynanır?</h3>
+                <div id="instructions-content" style="font-size: 0.85rem; color: var(--text-dim);">
+                    <!-- Dinamik yüklenecek -->
+                </div>
+            </div>
+
+            <!-- Middle: Daily Quest -->
+            <div class="info-panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="color: var(--neon-blue); margin: 0;">🎯 Günün Görevleri</h3>
+                    <span id="quest-reset-timer" style="font-size: 0.7rem; color: #ff0000; font-family: monospace; border: 1px solid #ff0000; padding: 2px 6px; border-radius: 4px;">00:00:00</span>
+                </div>
+                <div id="quest-list">
+                    <!-- Dinamik olarak 2 görev buraya gelecek -->
+                    <p style="font-size: 0.8rem; color: var(--text-dim);">Görevler yükleniyor...</p>
+                </div>
+                <p style="font-size: 0.6rem; color: #555; margin-top: 10px; text-align: center;">Görevler her gece 00:00'da yenilenir.</p>
+            </div>
+
+            <!-- Right: Related Games -->
+            <div class="info-panel">
+                <h3 style="color: var(--neon-pink); margin-bottom: 1rem;">🔥 Benzer Oyunlar</h3>
+                <div id="related-list" class="related-compact-list">
+                    <!-- Dinamik yüklenecek -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NICKNAME MODAL (For Direct Game Access) -->
+    <div id="nickname-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
+        <div class="modal-content" style="background: var(--card); padding: 40px; border-radius: 24px; border: 1px solid var(--neon-blue); text-align: center; width: 90%; max-width: 400px; box-shadow: 0 0 30px rgba(0, 242, 255, 0.2);">
+            <div style="font-size: 3rem; margin-bottom: 20px;">🕹️</div>
+            <h2 style="margin: 0 0 10px 0; color: white;">HOŞ GELDİN OYUNCU!</h2>
+            <p style="color: var(--text-dim); font-size: 0.9rem; margin-bottom: 25px;">Rekorunu kaydetmek için bir takma ad belirle.</p>
+            <input type="text" id="user-nickname-input" placeholder="Takma Adın" maxlength="15" style="width: 100%; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid #333; border-radius: 12px; color: white; text-align: center; font-size: 1.1rem; margin-bottom: 20px; outline: none;">
+            <button onclick="saveNickname()" style="width: 100%; padding: 15px; background: var(--neon-blue); color: black; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 1rem;">BAŞLA!</button>
+        </div>
+    </div>
+
+    <script type="module" src="js/game-loader.js" defer></script>
+</body>
+</html>

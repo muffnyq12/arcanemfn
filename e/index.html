@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Arcade Hub | Modern Indie Oyun Platformu</title>
+    <link rel="stylesheet" href="style.css?v=2.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <style>html, body { background: #000 !important; overflow: hidden !important; }</style>
+    <!-- THEME BOOTSTRAPPER (Prevents Flickering) -->
+    <script>
+        const cachedTheme = localStorage.getItem('retroArcade_cachedTheme');
+        if (cachedTheme) {
+            document.documentElement.className = 'theme-' + cachedTheme;
+            // Body may not exist yet, but we try anyway
+            document.addEventListener('DOMContentLoaded', () => {
+                document.body.className = 'theme-' + cachedTheme;
+            });
+        }
+    </script>
+</head>
+
+<body>
+
+    <!-- Professional Splash Screen -->
+    <div id="splash-screen">
+        <div class="splash-content">
+            <div class="logo-big pulse">RETRO ARCADE HUB</div>
+            <div class="loading-bar">
+                <div class="bar-progress"></div>
+            </div>
+            <p>Sistem Yükleniyor...</p>
+        </div>
+    </div>
+
+    <nav>
+        <div class="container nav-content">
+            <div class="logo">Retro Arcade Hub</div>
+
+            <div class="search-bar">
+                <input type="text" placeholder="Oyun ara...">
+            </div>
+
+            <div class="user-stats">
+                <div class="xp-container" title="Bir sonraki seviye için çok yaklaştın!">
+                    <span class="level-label">LVL 1</span>
+                    <div class="xp-bar-bg">
+                        <div class="xp-bar-fill" style="width: 0%;"></div>
+                    </div>
+                    <span id="xp-hint"
+                        style="font-size: 0.5rem; color: #ffd700; margin-top: 2px; font-weight: bold; animation: pulse 1s infinite;">AZ
+                        KALDI! 🔥</span>
+                </div>
+                <div class="tokens">
+                    🪙 0
+                </div>
+            </div>
+
+            <ul class="nav-links">
+                <li><a href="index.html">Ana Sayfa</a></li>
+                <li><a href="about.html">Hakkımızda</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- System Announcement Bar -->
+    <div id="announcement-bar" class="announcement-bar" style="display: none;">
+        <div class="container">
+            <span id="announcement-text"></span>
+        </div>
+    </div>
+
+    <header class="hero">
+        <div class="container hero-split">
+            <div class="hero-text">
+                <span class="badge"
+                    style="background: var(--neon-pink); color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.6rem; font-weight: 900; letter-spacing: 1px; margin-bottom: 0.8rem; display: inline-block;">YENİ
+                    NESİL ARCADE DENEYİMİ</span>
+                <h1 style="font-size: 2.8rem; line-height: 1; margin-bottom: 1rem;">Sınırları Zorla, <br><span
+                        class="text-gradient">Rekorları Alt Üst Et!</span></h1>
+                <p style="font-size: 0.95rem; color: var(--text-dim); margin-bottom: 1.5rem; max-width: 450px;">Retro
+                    Arcade Hub ile nostaljik oyunların büyüsüne kapıl, rakiplerini geride bırak ve efsaneye dönüş.</p>
+                <div class="hero-btns" style="display: flex; gap: 0.8rem; align-items: stretch;">
+                    <a href="#games" class="buy-btn" style="padding: 10px 20px; font-size: 0.85rem; flex: 1; display: flex; align-items: center; justify-content: center;">ŞİMDİ OYNAMAYA BAŞLA 🕹️</a>
+                    
+                    <div class="daily-reward-box" style="margin: 0; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); display: flex; align-items: center; gap: 10px; padding: 0 12px; border-radius: 12px; font-size: 0.75rem;">
+                        <span style="color: var(--text-dim);">Giriş Ödülü: <strong style="color: var(--neon-blue);">+50 Token</strong></span>
+                        <button class="reward-btn" style="padding: 4px 10px; font-size: 0.65rem;">AL</button>
+                    </div>
+
+                    <!-- MOBILE-ONLY LEADERBOARD (Inside the stack) -->
+                    <div class="leaderboard-preview mobile-only" id="mobile-leaderboard-v2">
+                        <h3 id="leaderboard-title-mobile" onclick="toggleLeaderboard()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; margin: 0; width: 100%;">
+                            🏆 YÜKLENİYOR...
+                            <span class="toggle-icon">▼</span>
+                        </h3>
+                        <div class="leaderboard-content" id="leaderboard-list-mobile">
+                            <div class="leader-item"><span>Yükleniyor...</span></div>
+                        </div>
+                    </div>
+
+                    <!-- MOBILE-ONLY AD (High Visibility) -->
+                    <div class="ad-placeholder banner-ad-thin mobile-only" style="margin-top: 5px !important; border-color: var(--neon-purple); background: rgba(153, 0, 255, 0.05); width: 100%; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: bold;">
+                        Google AdSense - 320x50 (High CTR Mobile Ad)
+                    </div>
+                </div>
+            </div>
+
+            <!-- PC-ONLY LEADERBOARD -->
+            <div class="leaderboard-preview pc-only">
+                <h3 id="leaderboard-title-pc">🏆 YÜKLENİYOR...</h3>
+                <div id="leaderboard-list">
+                    <div class="leader-item"><span>Yükleniyor...</span></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Top Ad Banner (PC ONLY) -->
+        <div class="ad-slot ad-top pc-only">
+            Google AdSense - 728x90 (Banner Reklam)
+        </div>
+
+        <section id="games" class="games-section">
+            <div class="section-header">
+                <h2 style="font-size: 2rem;">Haftanın Favorisi</h2>
+            </div>
+
+            <!-- Featured Game -->
+            <div class="featured-card" onclick="loadGame('space-shooter')" style="position: relative; cursor: pointer;">
+                <!-- FOMO TAG -->
+                <div class="fomo-timer">⏳ ETKİNLİK BİTİYOR: <span id="event-timer">00:00:00</span></div>
+
+                <img src="assets/space-shooter.webp" alt="Space Shooter" loading="lazy">
+                <div class="featured-info">
+                    <span class="game-tag tag-space">ÖNERİLEN HAFTANIN OYUNU</span>
+                    <h2>Space Shooter: Neon Strike</h2>
+                    <p>Uzayın derinliklerinde amansız bir savaş seni bekliyor. Gemiğini geliştir, düşmanları yok et ve galaksiyi kurtar! Şimdi oyna ve liderlik tablosunda zirveye oyna.</p>
+                    <div class="featured-stats">
+                        <span>🎮 120k+ Oynanma</span>
+                        <span>⭐ 4.9/5 Puan</span>
+                    </div>
+                </div>
+            </div>
+
+            <h2 style="margin: 3rem 0 1.5rem; font-size: 1.5rem; color: var(--text-dim);">Diğer Popüler Oyunlar</h2>
+            <div id="main-game-grid" class="game-grid">
+                <!-- Oyunlar JS tarafından buraya dinamik olarak yüklenecek -->
+            </div>
+
+            <!-- New Ad Slot (Below Grid) -->
+            <div class="ad-placeholder banner-ad" style="margin-top: 3rem;">
+                Google AdSense - 728x90 (Banner Reklam)
+            </div>
+        </section>
+
+        <!-- NEON MARKET SECTION -->
+        <section id="market" class="market-section">
+            <div style="display: flex; align-items: baseline; gap: 15px; margin-bottom: 2rem;">
+                <h2 style="font-size: 2rem; color: #ffd700; margin: 0;">🛒 Neon Market</h2>
+                <p style="color: var(--text-dim); font-size: 0.9rem; font-style: italic;">Oyunlardan kazandığın Tokenlar
+                    ile deneyimini güçlendir ve tarzını yansıt.</p>
+            </div>
+            <div class="market-grid">
+                <!-- Item 1 -->
+                <div class="market-item" data-price="500" data-id="avatar-bot">
+                    <div class="item-icon">🤖</div>
+                    <h4>Cyber Bot</h4>
+                    <p>Profiline fütüristik bir hava kat.</p>
+                    <button class="buy-btn">500 🪙</button>
+                </div>
+                <!-- Item 2 -->
+                <div class="market-item" data-price="1000" data-id="theme-pink">
+                    <div class="item-icon">🌸</div>
+                    <h4>Neon Pink</h4>
+                    <p>Arayüzü pembeye çevir.</p>
+                    <button class="buy-btn">1000 🪙</button>
+                </div>
+                <!-- Item 3 -->
+                <div class="market-item" data-price="300" data-id="xp-booster">
+                    <div class="item-icon">⚡</div>
+                    <h4>XP İksiri</h4>
+                    <p>Hızlı seviye atlamak için kullan.</p>
+                    <button class="buy-btn">300 🪙</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- NEWSLETTER SECTION -->
+        <section class="newsletter-section">
+            <div class="newsletter-card">
+                <h3>🚀 Yeni Oyunları Kaçırma!</h3>
+                <p>Haftalık en iyi indie oyunları ve özel token kodlarını e-postana gönderelim.</p>
+                <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Kayıt başarılı! 🎉');">
+                    <input type="email" placeholder="E-posta adresin..." required>
+                    <button type="submit">Abone Ol</button>
+                </form>
+            </div>
+        </section>
+
+    </div>
+
+    <footer class="pro-footer">
+        <div class="container footer-grid">
+            <div class="footer-info">
+                <div class="logo" style="margin-bottom: 1rem;">Retro Arcade Hub</div>
+                <p>Bağımsız geliştiricilerin buluşma noktası. En iyi HTML5 oyunları burada.</p>
+                <div class="trust-badges">
+                    <span>🛡️ DMCA Protected</span>
+                    <span>🔒 SSL Secured</span>
+                </div>
+            </div>
+            <div class="footer-links">
+                <h4>Hızlı Erişim</h4>
+                <a href="index.html">Ana Sayfa</a>
+                <a href="#market">Neon Market</a>
+                <a href="about.html">Hakkımızda</a>
+            </div>
+            <div class="footer-links">
+                <h4>Destek</h4>
+                <a href="#">Gizlilik Politikası</a>
+                <a href="#">Kullanım Şartları</a>
+                <a href="#">Geliştirici Başvurusu</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Retro Arcade Hub. Made for Gamers, by Gamers.</p>
+        </div>
+    </footer>
+
+    <!-- NICKNAME MODAL -->
+    <div id="nickname-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
+        <div class="modal-content" style="background: var(--card); padding: 40px; border-radius: 24px; border: 1px solid var(--neon-blue); text-align: center; width: 90%; max-width: 400px; box-shadow: 0 0 30px rgba(0, 242, 255, 0.2);">
+            <div style="font-size: 3rem; margin-bottom: 20px;">🕹️</div>
+            <h2 style="margin: 0 0 10px 0; color: white;">HOŞ GELDİN OYUNCU!</h2>
+            <p style="color: var(--text-dim); font-size: 0.9rem; margin-bottom: 25px;">Liderlik tablosunda yerini almak için bir takma ad belirle.</p>
+            <input type="text" id="user-nickname-input" placeholder="Takma Adın (Örn: NeonKnight)" maxlength="15" style="width: 100%; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid #333; border-radius: 12px; color: white; text-align: center; font-size: 1.1rem; margin-bottom: 20px; outline: none; transition: 0.3s;">
+            <button onclick="saveNickname()" style="width: 100%; padding: 15px; background: var(--neon-blue); color: black; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 1rem; transition: 0.3s;">BAŞLA!</button>
+        </div>
+    </div>
+
+    <!-- Firebase & Core Logic (DEFERRED FOR SPEED) -->
+    <script type="module" src="js/game-loader.js" defer></script>
+</body>
+
+</html>
