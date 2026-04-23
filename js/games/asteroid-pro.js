@@ -1,6 +1,6 @@
 (function() {
     /**
-     * ASTEROIDS PRO: NEON STRIKE - ROBUST PC & MOBILE CONTROLS
+     * ASTEROIDS PRO: NEON STRIKE - ABSOLUTE MOBILE UI
      */
     const canvas = document.getElementById('gameCanvas');
     if (!canvas) return;
@@ -28,27 +28,32 @@
         if (container) {
             canvas.width = container.offsetWidth; canvas.height = container.offsetHeight;
             if (!ship) reset();
+            setupMobileControls(); // RE-RENDER ON RESIZE/ROTATE
         }
     }
     window.addEventListener('resize', resize);
-    resize();
-
-    // MOBILE CONTROLS LOGIC
+    
+    // MOBILE CONTROLS (BYPASS LANDSCAPE WIDTH ISSUE)
     let mobileKeys = { left: false, right: false, thrust: false };
     function setupMobileControls() {
-        if (window.innerWidth > 768) return;
+        const isMobile = window.innerWidth <= 1024 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (!isMobile) return;
+
         const container = document.getElementById('game-canvas-container');
-        const old = document.getElementById('mobile-asteroid-ui'); if (old) old.remove();
-
-        const ui = document.createElement('div');
-        ui.id = 'mobile-asteroid-ui';
-        ui.style = "position:absolute;bottom:30px;left:0;right:0;height:120px;display:flex;justify-content:space-between;padding:0 30px;pointer-events:none;z-index:9999;";
+        if (!container) return;
         
-        const btnStyle = "width:75px;height:75px;background:rgba(0,242,255,0.25);border:2px solid var(--neon-blue);border-radius:50%;color:white;display:flex;align-items:center;justify-content:center;font-size:1.6rem;pointer-events:auto;user-select:none;touch-action:manipulation;box-shadow:0 0 15px rgba(0,242,255,0.5);";
-        const fireStyle = btnStyle + "border-color:var(--neon-pink);box-shadow:0 0 15px rgba(255,0,119,0.5);width:95px;height:95px;";
+        let ui = document.getElementById('mobile-asteroid-ui');
+        if (ui) ui.remove();
 
-        const leftGroup = document.createElement('div'); leftGroup.style = "display:flex;gap:25px;align-items:center;";
-        const rightGroup = document.createElement('div'); rightGroup.style = "display:flex;gap:25px;align-items:center;";
+        ui = document.createElement('div');
+        ui.id = 'mobile-asteroid-ui';
+        ui.style = "position:absolute;bottom:20px;left:0;right:0;height:120px;display:flex;justify-content:space-between;padding:0 30px;pointer-events:none;z-index:9999;";
+        
+        const btnStyle = "width:75px;height:75px;background:rgba(0,242,255,0.2);border:3px solid #00f2ff;border-radius:50%;color:white;display:flex;align-items:center;justify-content:center;font-size:1.8rem;pointer-events:auto;user-select:none;touch-action:manipulation;box-shadow:0 0 20px rgba(0,242,255,0.4);";
+        const fireStyle = btnStyle + "border-color:#ff0077;box-shadow:0 0 20px rgba(255,0,119,0.4);width:100px;height:100px;";
+
+        const leftGroup = document.createElement('div'); leftGroup.style = "display:flex;gap:30px;align-items:center;";
+        const rightGroup = document.createElement('div'); rightGroup.style = "display:flex;gap:30px;align-items:center;";
 
         const btnL = document.createElement('div'); btnL.innerHTML = "←"; btnL.style = btnStyle;
         const btnR = document.createElement('div'); btnR.innerHTML = "→"; btnR.style = btnStyle;
@@ -62,13 +67,9 @@
             el.addEventListener('touchend', end, {passive: false});
             el.addEventListener('mousedown', start);
             el.addEventListener('mouseup', end);
-            el.addEventListener('mouseleave', end);
         };
 
-        bind(btnL, 'left', true); 
-        bind(btnR, 'right', true); 
-        bind(btnT, 'thrust', true); // FIXED SYNTAX ERROR HERE
-        
+        bind(btnL, 'left', true); bind(btnR, 'right', true); bind(btnT, 'thrust', true);
         btnF.addEventListener('touchstart', (e) => { e.preventDefault(); fire(); }, {passive: false});
         btnF.addEventListener('mousedown', (e) => { e.preventDefault(); fire(); });
 
@@ -80,38 +81,32 @@
 
     function fire() {
         if (gameOver) return;
-        bullets.push({ x: ship.x + Math.cos(ship.a) * ship.r, y: ship.y + Math.sin(ship.a) * ship.r, v: { x: Math.cos(ship.a) * 5, y: Math.sin(ship.a) * 5 }, life: 60 });
+        bullets.push({ x: ship.x + Math.cos(ship.a) * ship.r, y: ship.y + Math.sin(ship.a) * ship.r, v: { x: Math.cos(ship.a) * 6, y: Math.sin(ship.a) * 6 }, life: 60 });
     }
 
     function update(t) {
         const dt = (t - lastTime) / 1000; lastTime = t;
         ctx.fillStyle = '#010103'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-
         if (!gameOver) {
             if (keys[37] || mobileKeys.left) ship.a -= 0.1;
             if (keys[39] || mobileKeys.right) ship.a += 0.1;
             ship.thrusting = keys[38] || mobileKeys.thrust;
-            if (ship.thrusting) { ship.thrust.x += Math.cos(ship.a) * 0.15; ship.thrust.y += Math.sin(ship.a) * 0.15; }
-            else { ship.thrust.x *= 0.99; ship.thrust.y *= 0.99; }
+            if (ship.thrusting) { ship.thrust.x += Math.cos(ship.a) * 0.18; ship.thrust.y += Math.sin(ship.a) * 0.18; }
+            else { ship.thrust.x *= 0.98; ship.thrust.y *= 0.98; }
             ship.x += ship.thrust.x; ship.y += ship.thrust.y;
             if (ship.x < 0) ship.x = canvas.width; if (ship.x > canvas.width) ship.x = 0;
             if (ship.y < 0) ship.y = canvas.height; if (ship.y > canvas.height) ship.y = 0;
-
             ctx.strokeStyle = ship.thrusting ? '#ff0077' : '#00f2ff'; ctx.lineWidth = 2; ctx.beginPath();
             ctx.moveTo(ship.x + Math.cos(ship.a) * ship.r, ship.y + Math.sin(ship.a) * ship.r);
             ctx.lineTo(ship.x + Math.cos(ship.a + 2.5) * ship.r, ship.y + Math.sin(ship.a + 2.5) * ship.r);
             ctx.lineTo(ship.x + Math.cos(ship.a - 2.5) * ship.r, ship.y + Math.sin(ship.a - 2.5) * ship.r);
             ctx.closePath(); ctx.stroke();
         }
-
         for (let i = bullets.length - 1; i >= 0; i--) {
             let b = bullets[i]; b.x += b.v.x; b.y += b.v.y; b.life--;
-            if (b.x < 0) b.x = canvas.width; if (b.x > canvas.width) b.x = 0;
-            if (b.y < 0) b.y = canvas.height; if (b.y > canvas.height) b.y = 0;
             ctx.fillStyle = '#ff0077'; ctx.fillRect(b.x - 2, b.y - 2, 4, 4);
             if (b.life <= 0) bullets.splice(i, 1);
         }
-
         for (let i = asteroids.length - 1; i >= 0; i--) {
             let a = asteroids[i]; a.x += a.v.x; a.y += a.v.y;
             if (a.x < 0) a.x = canvas.width; if (a.x > canvas.width) a.x = 0;
@@ -135,24 +130,18 @@
                 }
             }
         }
-
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i]; p.x += p.v.x; p.y += p.v.y; p.life -= 0.02;
             ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, 2, 2); ctx.globalAlpha = 1;
             if (p.life <= 0) particles.splice(i, 1);
         }
-
         ctx.fillStyle = '#fff'; ctx.font = '20px Inter'; ctx.textAlign = 'left'; ctx.fillText(`SKOR: ${score}`, 20, 40);
         if (gameOver) { ctx.textAlign = 'center'; ctx.font = '40px Inter'; ctx.fillText('GAMEOVER', canvas.width / 2, canvas.height / 2); }
         requestAnimationFrame(update);
     }
 
-    window.addEventListener('keydown', e => { 
-        if([37,38,39,40,32].includes(e.keyCode)) e.preventDefault();
-        keys[e.keyCode] = true; 
-        if(e.keyCode == 32) fire(); 
-    });
+    window.addEventListener('keydown', e => { if([32,37,38,39,40].includes(e.keyCode)) e.preventDefault(); keys[e.keyCode] = true; if(e.keyCode == 32) fire(); });
     window.addEventListener('keyup', e => keys[e.keyCode] = false);
 
-    reset(); setupMobileControls(); requestAnimationFrame(update);
+    resize(); requestAnimationFrame(update);
 })();
