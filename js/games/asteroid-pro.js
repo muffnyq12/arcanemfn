@@ -1,136 +1,156 @@
 (function() {
     /**
-     * ASTEROIDS: NEON STRIKE - MOBILE LANDSCAPE ADAPTIVE
+     * ASTEROIDS PRO: NEON STRIKE - MOBILE CONTROL EDITION
      */
     const canvas = document.getElementById('gameCanvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
-    let ship; let asteroids = []; let bullets = []; let particles = [];
-    let score = 0; let wave = 1; let gameOver = false; let lastTime = 0;
+    let ship, asteroids, bullets, particles, score, gameOver, keys = {};
+    let lastTime = 0;
 
-    class Ship {
-        constructor() { this.reset(); }
-        reset() {
-            this.x = canvas.width / 2; this.y = canvas.height / 2;
-            this.r = 12; this.angle = 0; this.rotation = 0;
-            this.velocity = { x: 0, y: 0 }; this.thrusting = false;
-        }
-        draw() {
-            ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
-            ctx.strokeStyle = '#00f2ff'; ctx.lineWidth = 2; ctx.shadowBlur = 15; ctx.shadowColor = '#00f2ff';
-            ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(-8, 8); ctx.lineTo(-4, 0); ctx.lineTo(-8, -8); ctx.closePath(); ctx.stroke();
-            if (this.thrusting) { ctx.strokeStyle = '#ff0077'; ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(-12, 0); ctx.stroke(); }
-            ctx.restore();
-        }
-        update() {
-            if (this.thrusting) { this.velocity.x += Math.cos(this.angle) * 0.12; this.velocity.y += Math.sin(this.angle) * 0.12; }
-            this.velocity.x *= 0.99; this.velocity.y *= 0.99;
-            this.x += this.velocity.x; this.y += this.velocity.y; this.angle += this.rotation;
-            if (this.x < 0) this.x = canvas.width; if (this.x > canvas.width) this.x = 0;
-            if (this.y < 0) this.y = canvas.height; if (this.y > canvas.height) this.y = 0;
-        }
+    function reset() {
+        ship = { x: canvas.width / 2, y: canvas.height / 2, r: 15, a: 0, rot: 0, thrust: { x: 0, y: 0 }, thrusting: false };
+        asteroids = []; bullets = []; particles = []; score = 0; gameOver = false;
+        for (let i = 0; i < 5; i++) createAsteroid(Math.random() * canvas.width, Math.random() * canvas.height, 40);
     }
 
-    class Asteroid {
-        constructor(x, y, r, t) {
-            this.x = x || Math.random() * canvas.width; this.y = y || Math.random() * canvas.height;
-            this.r = r || 30; this.t = t || 3;
-            this.v = { x: (Math.random()-0.5)*3, y: (Math.random()-0.5)*3 };
-            this.verts = Math.floor(Math.random()*5+7); this.offs = [];
-            for(let i=0; i<this.verts; i++) this.offs.push(Math.random()*0.4+0.8);
-        }
-        draw() {
-            ctx.save(); ctx.translate(this.x, this.y); ctx.strokeStyle = '#bc13fe'; ctx.lineWidth = 2;
-            ctx.beginPath(); for(let i=0; i<this.verts; i++) {
-                let a = (i/this.verts)*Math.PI*2; let r = this.r*this.offs[i]; ctx.lineTo(r*Math.cos(a), r*Math.sin(a));
-            }
-            ctx.closePath(); ctx.stroke(); ctx.restore();
-        }
-        update() {
-            this.x += this.v.x; this.y += this.v.y;
-            if (this.x < -this.r) this.x = canvas.width + this.r; if (this.x > canvas.width + this.r) this.x = -this.r;
-            if (this.y < -this.r) this.y = canvas.height + this.r; if (this.y > canvas.height + this.r) this.y = -this.r;
-        }
+    function createAsteroid(x, y, r) {
+        asteroids.push({ x, y, r, v: { x: (Math.random() - 0.5) * 2, y: (Math.random() - 0.5) * 2 }, offs: Array.from({ length: 10 }, () => Math.random() * 0.4 + 0.8) });
+    }
+
+    function createExplosion(x, y, color) {
+        for (let i = 0; i < 15; i++) particles.push({ x, y, v: { x: (Math.random() - 0.5) * 4, y: (Math.random() - 0.5) * 4 }, life: 1, color });
     }
 
     function resize() {
         const container = document.getElementById('game-canvas-container');
-        if (container) { canvas.width = container.offsetWidth; canvas.height = container.offsetHeight; }
+        if (container) {
+            canvas.width = container.offsetWidth; canvas.height = container.offsetHeight;
+            if (!ship) reset();
+        }
     }
-
     window.addEventListener('resize', resize);
     resize();
 
-    function drawHUD() {
-        const isMobile = canvas.width < 768;
-        ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Inter'; ctx.textAlign = 'left';
-        ctx.fillText(`SCORE: ${score}`, 20, 30);
-        ctx.textAlign = 'right'; ctx.fillText(`WAVE: ${wave}`, canvas.width - 20, 30);
-        if (!isMobile) {
-            // PC Side Panels (Optional overlay)
-        }
-    }
-
-    function update(t) {
-        ctx.fillStyle = '#010103'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        if (!gameOver) {
-            ship.update(); ship.draw();
-            asteroids.forEach((a, i) => {
-                a.update(); a.draw();
-                if (Math.hypot(ship.x - a.x, ship.y - a.y) < ship.r + a.r) gameOver = true;
-            });
-            bullets.forEach((b, bi) => {
-                b.x += b.vx; b.y += b.vy;
-                ctx.fillStyle = '#ff0077'; ctx.beginPath(); ctx.arc(b.x, b.y, 2, 0, Math.PI*2); ctx.fill();
-                asteroids.forEach((a, ai) => {
-                    if (Math.hypot(b.x - a.x, b.y - a.y) < a.r) {
-                        bullets.splice(bi, 1);
-                        if (a.r > 12) { asteroids.push(new Asteroid(a.x, a.y, a.r/2, a.t-1)); asteroids.push(new Asteroid(a.x, a.y, a.r/2, a.t-1)); }
-                        asteroids.splice(ai, 1); score += 100;
-                        if (asteroids.length === 0) { wave++; spawnWave(); }
-                    }
-                });
-            });
-        }
-        drawHUD();
-        if (gameOver) {
-            ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(0,0,canvas.width, canvas.height);
-            ctx.fillStyle = '#ff0077'; ctx.font = 'bold 40px Inter'; ctx.textAlign = 'center';
-            ctx.fillText('MISSION FAILED', canvas.width/2, canvas.height/2);
-        }
-        requestAnimationFrame(update);
-    }
-
-    function spawnWave() { for(let i=0; i<3+wave; i++) asteroids.push(new Asteroid()); }
-
+    // MOBILE CONTROLS LOGIC
+    let mobileKeys = { left: false, right: false, thrust: false };
     function setupMobileControls() {
-        const isMobile = window.innerWidth < 768;
-        if (!isMobile) return;
+        if (window.innerWidth > 768) return;
         const container = document.getElementById('game-canvas-container');
-        const old = document.getElementById('asteroid-mobile-ui'); if (old) old.remove();
-        const ui = document.createElement('div'); ui.id = 'asteroid-mobile-ui';
-        ui.style = "position:absolute;bottom:20px;left:20px;right:20px;display:flex;justify-content:space-between;pointer-events:none;z-index:100;";
-        const leftGrp = document.createElement('div'); leftGrp.style = "display:flex;gap:10px;pointer-events:auto;";
-        const rightGrp = document.createElement('div'); rightGrp.style = "display:flex;gap:10px;pointer-events:auto;";
-        
-        const btnStyle = "width:60px;height:60px;background:rgba(0,242,255,0.1);border:2px solid #00f2ff;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:bold;user-select:none;touch-action:manipulation;";
-        
-        const bL = document.createElement('div'); bL.innerHTML = '←'; bL.style = btnStyle;
-        bL.ontouchstart = (e) => { e.preventDefault(); ship.rotation = -0.1; }; bL.ontouchend = () => ship.rotation = 0;
-        const bR = document.createElement('div'); bR.innerHTML = '→'; bR.style = btnStyle;
-        bR.ontouchstart = (e) => { e.preventDefault(); ship.rotation = 0.1; }; bR.ontouchend = () => ship.rotation = 0;
-        const bT = document.createElement('div'); bT.innerHTML = '↑'; bT.style = btnStyle + "background:rgba(188,19,254,0.1);border-color:#bc13fe;";
-        bT.ontouchstart = (e) => { e.preventDefault(); ship.thrusting = true; }; bT.ontouchend = () => ship.thrusting = false;
-        const bF = document.createElement('div'); bF.innerHTML = '🔥'; bF.style = btnStyle + "background:rgba(255,0,119,0.1);border-color:#ff0077;";
-        bF.ontouchstart = (e) => { e.preventDefault(); bullets.push({ x: ship.x, y: ship.y, vx: Math.cos(ship.angle)*8, vy: Math.sin(ship.angle)*8 }); };
+        const old = document.getElementById('mobile-asteroid-ui'); if (old) old.remove();
 
-        leftGrp.appendChild(bL); leftGrp.appendChild(bR);
-        rightGrp.appendChild(bT); rightGrp.appendChild(bF);
-        ui.appendChild(leftGrp); ui.appendChild(rightGrp);
+        const ui = document.createElement('div');
+        ui.id = 'mobile-asteroid-ui';
+        ui.style = "position:absolute;bottom:20px;left:0;right:0;height:120px;display:flex;justify-content:space-between;padding:0 30px;pointer-events:none;z-index:1000;";
+        
+        const btnStyle = "width:70px;height:70px;background:rgba(0,242,255,0.1);border:2px solid var(--neon-blue);border-radius:50%;color:white;display:flex;align-items:center;justify-content:center;font-size:1.5rem;pointer-events:auto;user-select:none;touch-action:manipulation;box-shadow:0 0 15px var(--neon-blue);";
+        const fireStyle = btnStyle + "border-color:var(--neon-pink);box-shadow:0 0 15px var(--neon-pink);width:90px;height:90px;";
+
+        const leftGroup = document.createElement('div'); leftGroup.style = "display:flex;gap:20px;align-items:center;";
+        const rightGroup = document.createElement('div'); rightGroup.style = "display:flex;gap:20px;align-items:center;";
+
+        const btnL = document.createElement('div'); btnL.innerHTML = "←"; btnL.style = btnStyle;
+        const btnR = document.createElement('div'); btnR.innerHTML = "→"; btnR.style = btnStyle;
+        const btnT = document.createElement('div'); btnT.innerHTML = "🚀"; btnT.style = btnStyle;
+        const btnF = document.createElement('div'); btnF.innerHTML = "🔥"; btnF.style = fireStyle;
+
+        const bind = (el, key, val) => {
+            el.ontouchstart = (e) => { e.preventDefault(); mobileKeys[key] = val; if(key==='fire') fire(); };
+            el.ontouchend = (e) => { e.preventDefault(); mobileKeys[key] = false; };
+        };
+
+        bind(btnL, 'left', true); bind(btnR, 'right', true); bind(btnT, 'thrust', true);
+        btnF.ontouchstart = (e) => { e.preventDefault(); fire(); };
+
+        leftGroup.appendChild(btnL); leftGroup.appendChild(btnR);
+        rightGroup.appendChild(btnT); rightGroup.appendChild(btnF);
+        ui.appendChild(leftGroup); ui.appendChild(rightGroup);
         container.appendChild(ui);
     }
 
-    function init() { ship = new Ship(); spawnWave(); requestAnimationFrame(update); setupMobileControls(); }
-    init();
+    function fire() {
+        if (gameOver) return;
+        bullets.push({ x: ship.x + Math.cos(ship.a) * ship.r, y: ship.y + Math.sin(ship.a) * ship.r, v: { x: Math.cos(ship.a) * 5, y: Math.sin(ship.a) * 5 }, life: 60 });
+    }
+
+    function update(t) {
+        const dt = (t - lastTime) / 1000; lastTime = t;
+        ctx.fillStyle = '#010103'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        if (!gameOver) {
+            // MOVEMENT
+            if (keys[37] || mobileKeys.left) ship.a -= 0.1;
+            if (keys[39] || mobileKeys.right) ship.a += 0.1;
+            ship.thrusting = keys[38] || mobileKeys.thrust;
+            if (ship.thrusting) { ship.thrust.x += Math.cos(ship.a) * 0.1; ship.thrust.y += Math.sin(ship.a) * 0.1; }
+            else { ship.thrust.x *= 0.99; ship.thrust.y *= 0.99; }
+
+            ship.x += ship.thrust.x; ship.y += ship.thrust.y;
+            if (ship.x < 0) ship.x = canvas.width; if (ship.x > canvas.width) ship.x = 0;
+            if (ship.y < 0) ship.y = canvas.height; if (ship.y > canvas.height) ship.y = 0;
+
+            // DRAW SHIP
+            ctx.strokeStyle = ship.thrusting ? '#ff0077' : '#00f2ff'; ctx.lineWidth = 2; ctx.beginPath();
+            ctx.moveTo(ship.x + Math.cos(ship.a) * ship.r, ship.y + Math.sin(ship.a) * ship.r);
+            ctx.lineTo(ship.x + Math.cos(ship.a + 2.5) * ship.r, ship.y + Math.sin(ship.a + 2.5) * ship.r);
+            ctx.lineTo(ship.x + Math.cos(ship.a - 2.5) * ship.r, ship.y + Math.sin(ship.a - 2.5) * ship.r);
+            ctx.closePath(); ctx.stroke();
+        }
+
+        // BULLETS
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            let b = bullets[i]; b.x += b.v.x; b.y += b.v.y; b.life--;
+            if (b.x < 0) b.x = canvas.width; if (b.x > canvas.width) b.x = 0;
+            if (b.y < 0) b.y = canvas.height; if (b.y > canvas.height) b.y = 0;
+            ctx.fillStyle = '#ff0077'; ctx.fillRect(b.x - 2, b.y - 2, 4, 4);
+            if (b.life <= 0) bullets.splice(i, 1);
+        }
+
+        // ASTEROIDS
+        for (let i = asteroids.length - 1; i >= 0; i--) {
+            let a = asteroids[i]; a.x += a.v.x; a.y += a.v.y;
+            if (a.x < 0) a.x = canvas.width; if (a.x > canvas.width) a.x = 0;
+            if (a.y < 0) a.y = canvas.height; if (a.y > canvas.height) a.y = 0;
+            
+            ctx.strokeStyle = '#bc13fe'; ctx.beginPath();
+            for (let j = 0; j < 10; j++) {
+                let ang = (j / 10) * Math.PI * 2;
+                ctx.lineTo(a.x + Math.cos(ang) * a.r * a.offs[j], a.y + Math.sin(ang) * a.r * a.offs[j]);
+            }
+            ctx.closePath(); ctx.stroke();
+
+            // Collision
+            if (!gameOver) {
+                let d = Math.hypot(ship.x - a.x, ship.y - a.y);
+                if (d < ship.r + a.r) { gameOver = true; createExplosion(ship.x, ship.y, '#00f2ff'); setTimeout(reset, 2000); }
+                for (let j = bullets.length - 1; j >= 0; j--) {
+                    let b = bullets[j];
+                    if (Math.hypot(b.x - a.x, b.y - a.y) < a.r) {
+                        createExplosion(a.x, a.y, '#bc13fe');
+                        if (a.r > 20) { createAsteroid(a.x, a.y, a.r / 2); createAsteroid(a.x, a.y, a.r / 2); }
+                        asteroids.splice(i, 1); bullets.splice(j, 1); score += 100; break;
+                    }
+                }
+            }
+        }
+
+        // PARTICLES
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i]; p.x += p.v.x; p.y += p.v.y; p.life -= 0.02;
+            ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, 2, 2); ctx.globalAlpha = 1;
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+
+        // HUD
+        ctx.fillStyle = '#fff'; ctx.font = '20px Inter'; ctx.textAlign = 'left'; ctx.fillText(`SKOR: ${score}`, 20, 40);
+        if (gameOver) { ctx.textAlign = 'center'; ctx.font = '40px Inter'; ctx.fillText('GAMEOVER', canvas.width / 2, canvas.height / 2); }
+
+        requestAnimationFrame(update);
+    }
+
+    window.addEventListener('keydown', e => { keys[e.keyCode] = true; if(e.keyCode == 32) fire(); });
+    window.addEventListener('keyup', e => keys[e.keyCode] = false);
+
+    reset(); setupMobileControls(); requestAnimationFrame(update);
 })();

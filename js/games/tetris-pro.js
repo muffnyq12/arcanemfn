@@ -1,6 +1,6 @@
 (function() {
     /**
-     * TETRIS PRO: NEON ULTIMATE - TR LOCALIZED & CLEAN HUD
+     * TETRIS PRO: NEON ULTIMATE - MOBILE TOUCH CONSOLE EDITION
      */
     const canvas = document.getElementById('gameCanvas');
     if (!canvas) return;
@@ -39,8 +39,8 @@
             canvas.width = container.offsetWidth; canvas.height = container.offsetHeight;
             const isMobile = window.innerWidth < 768;
             if (isMobile) {
-                BLOCK_SIZE = Math.floor((canvas.width * 0.95) / COLS);
-                if (BLOCK_SIZE * ROWS > canvas.height * 0.75) BLOCK_SIZE = Math.floor((canvas.height * 0.75) / ROWS);
+                BLOCK_SIZE = Math.floor((canvas.width * 0.90) / COLS);
+                if (BLOCK_SIZE * ROWS > canvas.height * 0.70) BLOCK_SIZE = Math.floor((canvas.height * 0.70) / ROWS);
             } else BLOCK_SIZE = Math.floor((canvas.height * 0.98) / ROWS);
         }
     }
@@ -141,8 +141,6 @@
             ctx.fillText(`SKOR: ${score.toLocaleString()}`, canvas.width/4, 45);
             ctx.fillText(`SEVİYE: ${level}`, canvas.width/2, 45);
             ctx.fillText(`SATIR: ${lines}`, (canvas.width/4)*3, 45);
-            ctx.font = 'bold 10px Inter'; ctx.fillText('SIRADAKİ', canvas.width - 45, 80);
-            if (nextPiece) drawMatrix(nextPiece.matrix, { x: 0, y: 0 }, canvas.width - 80, 95, 0.6);
         }
 
         ctx.strokeStyle = '#bc13fe'; ctx.lineWidth = 4; ctx.strokeRect(offsetX - 3, offsetY - 3, boardW + 6, boardH + 6);
@@ -192,18 +190,39 @@
         else if (e.keyCode === 32) playerHardDrop(); else if (e.keyCode === 16 || e.keyCode === 67) playerHold();
     });
 
-    function setupMobile() {
-        const container = document.getElementById('game-canvas-container'); if (!container) return;
+    function setupMobileControls() {
+        if (window.innerWidth > 768) return;
+        const container = document.getElementById('game-canvas-container');
         const old = document.getElementById('tetris-mobile-ui'); if (old) old.remove();
-        const mobileUI = document.createElement('div'); mobileUI.id = 'tetris-mobile-ui';
-        mobileUI.style = "position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:8px;pointer-events:auto;z-index:100;padding:5px;";
-        const btnStyle = "width:50px;height:50px;background:rgba(0,242,255,0.1);border:2px solid #00f2ff;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:bold;user-select:none;touch-action:manipulation;box-shadow:0 0 10px #00f2ff;";
-        [{l:'←',a:()=>playerMove(-1)},{l:'↻',a:()=>playerRotate(1)},{l:'→',a:()=>playerMove(1)},{l:'↓',a:()=>playerDrop()},{l:'⤓',a:()=>playerHardDrop()},{l:'H',a:()=>playerHold()}].forEach(b=>{
-            const btn=document.createElement('div');btn.innerHTML=b.l;btn.style=btnStyle;btn.onclick=(e)=>{e.preventDefault();b.a()};btn.ontouchstart=(e)=>{e.preventDefault();b.a()};mobileUI.appendChild(btn);
+
+        const ui = document.createElement('div');
+        ui.id = 'tetris-mobile-ui';
+        ui.style = "position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:8px;pointer-events:auto;z-index:100;padding:10px;";
+        
+        const btnStyle = "width:55px;height:55px;background:rgba(0,242,255,0.05);border:2px solid #00f2ff;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:bold;user-select:none;touch-action:manipulation;box-shadow:0 0 10px #00f2ff;pointer-events:auto;";
+        const specStyle = btnStyle + "border-color:#ff0077;box-shadow:0 0 10px #ff0077;width:65px;height:65px;";
+
+        const controls = [
+            { l: '←', a: () => playerMove(-1) },
+            { l: '↻', a: () => playerRotate(1) },
+            { l: '→', a: () => playerMove(1) },
+            { l: '↓', a: () => playerDrop() },
+            { l: '⤓', a: () => playerHardDrop(), s: true },
+            { l: 'H', a: () => playerHold(), s: true }
+        ];
+
+        controls.forEach(b => {
+            const btn = document.createElement('div');
+            btn.innerHTML = b.l;
+            btn.style = b.s ? specStyle : btnStyle;
+            const trigger = (e) => { e.preventDefault(); if(!gameOver) b.a(); };
+            btn.ontouchstart = trigger;
+            ui.appendChild(btn);
         });
-        container.appendChild(mobileUI);
+
+        container.appendChild(ui);
     }
 
-    function init() { resetGrid(); playerReset(); update(); if (window.innerWidth < 768) setupMobile(); }
+    function init() { resetGrid(); playerReset(); update(); if (window.innerWidth < 768) setupMobileControls(); }
     init();
 })();
