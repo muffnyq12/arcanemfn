@@ -117,19 +117,19 @@
             // HUD Text Centered in Panels
             const leftMidX = panelGap + sidePanelW / 2;
             ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = '900 28px Inter';
-            ctx.fillText(`SEVİYE: ${level}`, leftMidX, 120);
-            ctx.font = '24px Inter'; ctx.fillText(`SKOR: ${score}`, leftMidX, 190);
-            ctx.fillStyle = '#ffd700'; ctx.fillText(`HEDEF: ${targetScore}`, leftMidX, 260);
+            ctx.fillText(`${window.i18n.get('level')}: ${level}`, leftMidX, 120);
+            ctx.font = '24px Inter'; ctx.fillText(`${window.i18n.get('score')}: ${score}`, leftMidX, 190);
+            ctx.fillStyle = '#ffd700'; ctx.fillText(`${window.i18n.get('target')}: ${targetScore}`, leftMidX, 260);
             ctx.fillStyle = '#ff0077'; ctx.fillText(`SÜRE: ${Math.floor(time)}sn`, leftMidX, 330);
 
-            // Right Panel Content (Placeholder or extra stats)
+            // Right Panel Content
             const rightMidX = offsetX + boardW + panelGap + sidePanelW / 2;
             ctx.fillStyle = 'rgba(0, 242, 255, 0.4)'; ctx.font = 'bold 14px Inter';
             ctx.fillText('SİSTEM DURUMU: AKTİF', rightMidX, 120);
             ctx.fillText('SYNCHRONIZING...', rightMidX, 150);
         } else {
             ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Inter';
-            ctx.fillText(`LVL ${level} | SKOR: ${score} | HEDEF: ${targetScore}`, canvas.width/2, 40);
+            ctx.fillText(`${window.i18n.get('level')} ${level} | ${window.i18n.get('score')}: ${score} | ${window.i18n.get('target')}: ${targetScore}`, canvas.width/2, 40);
             ctx.fillStyle = '#ff0077'; ctx.fillText(`${Math.floor(time)}sn`, canvas.width/2, 70);
         }
 

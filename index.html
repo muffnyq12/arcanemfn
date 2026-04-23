@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <script src="js/translations.js"></script>
     <style>html, body { background: #000 !important; overflow: hidden !important; }</style>
     <!-- THEME BOOTSTRAPPER (Prevents Flickering) -->
     <script>
@@ -32,7 +33,7 @@
             <div class="loading-bar">
                 <div class="bar-progress"></div>
             </div>
-            <p>Sistem Yükleniyor...</p>
+            <p data-i18n="loading_system">Sistem Yükleniyor...</p>
         </div>
     </div>
 
@@ -41,7 +42,7 @@
             <div class="logo">Retro Arcade Hub</div>
 
             <div class="search-bar">
-                <input type="text" placeholder="Oyun ara...">
+                <input type="text" placeholder="Oyun ara..." data-i18n="search_placeholder">
             </div>
 
             <div class="user-stats">
@@ -60,8 +61,8 @@
             </div>
 
             <ul class="nav-links">
-                <li><a href="index.html">Ana Sayfa</a></li>
-                <li><a href="about.html">Hakkımızda</a></li>
+                <li><a href="index.html" data-i18n="home">Ana Sayfa</a></li>
+                <li><a href="about.html" data-i18n="about">Hakkımızda</a></li>
             </ul>
         </div>
     </nav>
@@ -79,12 +80,12 @@
                 <span class="badge"
                     style="background: var(--neon-pink); color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.6rem; font-weight: 900; letter-spacing: 1px; margin-bottom: 0.8rem; display: inline-block;">YENİ
                     NESİL ARCADE DENEYİMİ</span>
-                <h1 style="font-size: 2.8rem; line-height: 1; margin-bottom: 1rem;">Sınırları Zorla, <br><span
+                <h1 style="font-size: 2.8rem; line-height: 1; margin-bottom: 1rem;" data-i18n="hero_main">Sınırları Zorla, <br><span
                         class="text-gradient">Rekorları Alt Üst Et!</span></h1>
-                <p style="font-size: 0.95rem; color: var(--text-dim); margin-bottom: 1.5rem; max-width: 450px;">Retro
+                <p style="font-size: 0.95rem; color: var(--text-dim); margin-bottom: 1.5rem; max-width: 450px;" data-i18n="hero_sub">Retro
                     Arcade Hub ile nostaljik oyunların büyüsüne kapıl, rakiplerini geride bırak ve efsaneye dönüş.</p>
                 <div class="hero-btns" style="display: flex; gap: 0.8rem; align-items: stretch;">
-                    <a href="#games" class="buy-btn" style="padding: 10px 20px; font-size: 0.85rem; flex: 1; display: flex; align-items: center; justify-content: center;">ŞİMDİ OYNAMAYA BAŞLA 🕹️</a>
+                    <a href="#games" class="buy-btn" style="padding: 10px 20px; font-size: 0.85rem; flex: 1; display: flex; align-items: center; justify-content: center;" data-i18n="start_btn">ŞİMDİ OYNAMAYA BAŞLA 🕹️</a>
                     
                     <div class="daily-reward-box" style="margin: 0; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); display: flex; align-items: center; gap: 10px; padding: 0 12px; border-radius: 12px; font-size: 0.75rem;">
                         <span style="color: var(--text-dim);">Giriş Ödülü: <strong style="color: var(--neon-blue);">+50 Token</strong></span>
@@ -161,8 +162,8 @@
         <!-- NEON MARKET SECTION -->
         <section id="market" class="market-section" style="margin-top: 4rem; padding-top: 2rem;">
             <div style="display: flex; align-items: baseline; gap: 15px; margin-bottom: 2rem;">
-                <h2 style="font-size: 2rem; color: #ffd700; margin: 0;">🛒 Neon Market</h2>
-                <p style="color: var(--text-dim); font-size: 0.9rem; font-style: italic;">Oyunlardan kazandığın Tokenlar
+                <h2 style="font-size: 2rem; color: #ffd700; margin: 0;" data-i18n="neon_market">🛒 Neon Market</h2>
+                <p style="color: var(--text-dim); font-size: 0.9rem; font-style: italic;" data-i18n="market_desc">Oyunlardan kazandığın Tokenlar
                     ile deneyimini güçlendir ve tarzını yansıt.</p>
             </div>
             <div class="market-grid">

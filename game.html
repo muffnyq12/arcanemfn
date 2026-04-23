@@ -6,6 +6,7 @@
     <title>Oyna | Retro Arcade Hub</title>
     <link rel="stylesheet" href="style.css?v=2.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="js/translations.js"></script>
     <style>
         html, body { background: #000 !important; overflow: hidden !important; }
         .container.game-container { max-width: none !important; width: 98% !important; padding: 0 !important; margin: 0 auto !important; }
@@ -28,7 +29,7 @@
         <div class="splash-content">
             <div class="logo-big pulse">RETRO ARCADE HUB</div>
             <div class="loader-line"></div>
-            <p>OYUN YÜKLENİYOR...</p>
+            <p data-i18n="loading_game">OYUN YÜKLENİYOR...</p>
         </div>
     </div>
 
@@ -47,8 +48,8 @@
             </div>
 
             <ul class="nav-links">
-                <li><a href="index.html">Ana Sayfa</a></li>
-                <li><a href="about.html">Hakkımızda</a></li>
+                <li><a href="index.html" data-i18n="home">Ana Sayfa</a></li>
+                <li><a href="about.html" data-i18n="about">Hakkımızda</a></li>
             </ul>
         </div>
     </nav>
@@ -69,8 +70,8 @@
 
     <div class="container game-container">
         <div class="game-header">
-            <h1 id="game-title" class="pulse">Oyun Yükleniyor...</h1>
-            <p id="game-subtitle" style="color: var(--text-dim);">Lütfen bekleyin...</p>
+            <h1 id="game-title" class="pulse" data-i18n="loading_game">Oyun Yükleniyor...</h1>
+            <p id="game-subtitle" style="color: var(--text-dim);" data-i18n="please_wait">Lütfen bekleyin...</p>
         </div>
 
         <!-- Game Viewport -->
@@ -80,8 +81,8 @@
             <!-- Rotate Device Overlay -->
             <div id="rotate-overlay" class="rotate-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #fff;">
                 <div style="font-size: 4rem; margin-bottom: 20px;">📱🔄</div>
-                <h2 style="color: var(--neon-blue);">LÜTFEN CİHAZI YAN ÇEVİRİN</h2>
-                <p style="color: var(--text-dim);">Bu oyun en iyi deneyim için yatay modda çalışır.</p>
+                <h2 style="color: var(--neon-blue);" data-i18n="rotate_warning">LÜTFEN CİHAZI YAN ÇEVİRİN</h2>
+                <p style="color: var(--text-dim);" data-i18n="rotate_warning_sub">Bu oyun en iyi deneyim için yatay modda çalışır.</p>
             </div>
 
             <script>
@@ -104,7 +105,7 @@
             </script>
 
             <!-- Pause UI (Hidden by default) -->
-            <button id="pause-game-btn" class="pause-btn">DURDUR</button>
+            <button id="pause-game-btn" class="pause-btn" data-i18n="paused">DURDUR</button>
 
             <!-- Mobile Controls -->
             <div class="mobile-controls">
@@ -117,7 +118,7 @@
         </div>
 
         <div style="display: flex; justify-content: flex-end; margin-top: 15px; gap: 10px;">
-            <button onclick="location.reload()" style="background: var(--card-bg); border: 1px solid var(--neon-blue); color: var(--neon-blue); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: bold; transition: 0.3s; box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);">
+            <button onclick="location.reload()" style="background: var(--card-bg); border: 1px solid var(--neon-blue); color: var(--neon-blue); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: bold; transition: 0.3s; box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);" data-i18n="restart">
                 🔄 Yeniden Başlat
             </button>
         </div>
@@ -126,7 +127,7 @@
         <div class="game-info-grid">
             <!-- Left: Instructions -->
             <div class="info-panel">
-                <h3 style="color: var(--neon-green); margin-bottom: 1rem;">🕹️ Nasıl Oynanır?</h3>
+                <h3 style="color: var(--neon-green); margin-bottom: 1rem;" data-i18n="how_to_play">🕹️ Nasıl Oynanır?</h3>
                 <div id="instructions-content" style="font-size: 0.85rem; color: var(--text-dim);">
                     <!-- Dinamik yüklenecek -->
                 </div>
@@ -135,7 +136,7 @@
             <!-- Middle: Daily Quest -->
             <div class="info-panel">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <h3 style="color: var(--neon-blue); margin: 0;">🎯 Günün Görevleri</h3>
+                    <h3 style="color: var(--neon-blue); margin: 0;" data-i18n="daily_quests">🎯 Günün Görevleri</h3>
                     <span id="quest-reset-timer" style="font-size: 0.7rem; color: #ff0000; font-family: monospace; border: 1px solid #ff0000; padding: 2px 6px; border-radius: 4px;">00:00:00</span>
                 </div>
                 <div id="quest-list">
@@ -147,7 +148,7 @@
 
             <!-- Right: Related Games -->
             <div class="info-panel">
-                <h3 style="color: var(--neon-pink); margin-bottom: 1rem;">🔥 Benzer Oyunlar</h3>
+                <h3 style="color: var(--neon-pink); margin-bottom: 1rem;" data-i18n="related_games">🔥 Benzer Oyunlar</h3>
                 <div id="related-list" class="related-compact-list">
                     <!-- Dinamik yüklenecek -->
                 </div>

@@ -173,9 +173,9 @@
 
         particles.forEach((p, i) => { p.x += p.v.x; p.y += p.v.y; p.life -= 0.02; ctx.fillStyle=p.color; ctx.globalAlpha=p.life; ctx.fillRect(p.x,p.y,2,2); ctx.globalAlpha=1; if(p.life<=0) particles.splice(i,1); });
 
-        ctx.fillStyle = '#fff'; ctx.font = '20px Inter'; ctx.textAlign = 'left'; ctx.fillText(`SKOR: ${score}`, 20, 40);
-        if (gameOver) { ctx.textAlign='center'; ctx.font='40px Inter'; ctx.fillText('GAMEOVER', canvas.width/2, canvas.height/2); }
-        if (isPaused) { ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font='bold 50px Inter'; ctx.fillText('PAUSED', canvas.width/2, canvas.height/2); }
+        ctx.fillStyle = '#fff'; ctx.font = '20px Inter'; ctx.textAlign = 'left'; ctx.fillText(`${window.i18n.get('score')}: ${score}`, 20, 40);
+        if (gameOver) { ctx.textAlign='center'; ctx.font='40px Inter'; ctx.fillText(window.i18n.get('game_over'), canvas.width/2, canvas.height/2); }
+        if (isPaused) { ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font='bold 50px Inter'; ctx.fillText(window.i18n.get('paused'), canvas.width/2, canvas.height/2); }
 
         requestAnimationFrame(update);
     }

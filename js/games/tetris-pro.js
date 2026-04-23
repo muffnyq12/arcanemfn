@@ -1,14 +1,21 @@
 (function() {
     /**
-     * TETRIS PRO: NEON ULTIMATE - TAP-TO-DROP & MAGIC SWAP EDITION
+     * TETRIS PRO: NEON ULTIMATE - BULLETPROOF EDITION
      */
     const canvas = document.getElementById('gameCanvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
+    // SAFE I18N GETTER (Prevents Crashes)
+    const _t = (key) => {
+        if (window.i18n && typeof window.i18n.get === 'function') return window.i18n.get(key);
+        const fallbacks = { score: "SKOR", level: "SEVİYE", lines: "SATIR", game_over: "OYUN BİTTİ", next: "SIRADAKİ" };
+        return fallbacks[key] || key;
+    };
+
     const COLS = 10;
     const ROWS = 20;
-    let BLOCK_SIZE;
+    let BLOCK_SIZE = 30; // Default fallback
     let grid = [];
     
     let score = 0; let lines = 0; let level = 1;
@@ -28,18 +35,30 @@
         [[7,7,0],[0,7,7],[0,0,0]]
     ];
 
-    function createPiece(type) { return { pos: { x: 3, y: 0 }, matrix: SHAPES[type], type: type }; }
+    function createPiece(type) { 
+        return { 
+            pos: { x: 3, y: 0 }, 
+            matrix: SHAPES[type].map(row => [...row]), 
+            type: type 
+        }; 
+    }
     function resetGrid() { grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0)); }
 
     function resize() {
         const container = document.getElementById('game-canvas-container');
         if (container) {
             canvas.width = container.offsetWidth; canvas.height = container.offsetHeight;
-            const isMobile = window.innerWidth <= 1366;
+            const isTouch = window.matchMedia("(pointer: coarse)").matches;
+            const isMobile = (window.innerWidth <= 1024 && isTouch);
+            
             if (isMobile) {
                 BLOCK_SIZE = Math.floor((canvas.width * 0.92) / COLS);
                 if (BLOCK_SIZE * ROWS > canvas.height * 0.75) BLOCK_SIZE = Math.floor((canvas.height * 0.75) / ROWS);
-            } else BLOCK_SIZE = Math.floor((canvas.height * 0.98) / ROWS);
+            } else {
+                BLOCK_SIZE = Math.floor((canvas.height * 0.95) / ROWS);
+                if (BLOCK_SIZE * COLS > canvas.width * 0.8) BLOCK_SIZE = Math.floor((canvas.width * 0.8) / COLS);
+            }
+            if (BLOCK_SIZE < 5) BLOCK_SIZE = 20; // Absolute safety
             setupMobileControls();
         }
     }
@@ -52,7 +71,6 @@
         player.matrix = nextPiece.matrix; player.type = nextPiece.type; player.pos.y = 0;
         player.pos.x = Math.floor(COLS / 2) - Math.floor(player.matrix[0].length / 2);
         nextPiece = createPiece(Math.floor(Math.random() * 7) + 1);
-        canHold = true;
         if (collide(grid, player)) { gameOver = true; endGame(); }
     }
 
@@ -97,11 +115,7 @@
 
     function playerHardDrop() { if (isPaused) return; while (!collide(grid, player)) player.pos.y++; player.pos.y--; merge(grid, player); playerReset(); gridSweep(); shake = 15; }
     function playerMove(dir) { if (isPaused) return; player.pos.x += dir; if (collide(grid, player)) player.pos.x -= dir; }
-    function magicSwap() {
-        if (isPaused) return;
-        playerRotate(1); // Yatay bloğu dik yap, dik bloğu yatay yap
-        shake = 5;
-    }
+    function magicSwap() { if (isPaused) return; playerRotate(1); shake = 5; }
 
     function gridSweep() {
         let rowCount = 1;
@@ -118,26 +132,25 @@
         if (shake > 0) { ctx.translate(Math.random()*shake-shake/2, Math.random()*shake-shake/2); shake *= 0.9; }
         ctx.fillStyle = '#010103'; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        const isMobile = window.innerWidth <= 1366;
+        const isTouch = window.matchMedia("(pointer: coarse)").matches;
+        const isMobile = (window.innerWidth <= 1024 && isTouch);
         const boardW = COLS * BLOCK_SIZE; const boardH = ROWS * BLOCK_SIZE;
         const offsetX = (canvas.width - boardW) / 2;
         const offsetY = isMobile ? 85 : (canvas.height - boardH) / 2;
 
         if (!isMobile) {
-            drawCyberPanel(ctx, 0, 0, offsetX - 10, canvas.height, 'SİSTEM VERİLERİ');
-            drawCyberPanel(ctx, offsetX + boardW + 10, 0, canvas.width - (offsetX + boardW + 10), canvas.height, 'TAKTIK RADAR');
-            ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = 'bold 30px Inter';
-            ctx.fillText('GÖREV İSTATİSTİĞİ', offsetX / 2, 100);
-            ctx.font = '22px Inter'; ctx.fillText(`SKOR: ${score.toLocaleString()}`, offsetX / 2, 180);
-            ctx.fillText(`SEVİYE: ${level}`, offsetX / 2, 240);
-            ctx.fillText(`SATIR: ${lines}`, offsetX / 2, 300);
-            ctx.font = 'bold 18px Inter'; ctx.fillText('SIRADAKİ', offsetX + boardW + (canvas.width - (offsetX + boardW)) / 2, 100);
+            drawCyberPanel(ctx, 10, 10, Math.max(10, offsetX - 30), canvas.height - 20, _t('score'));
+            drawCyberPanel(ctx, offsetX + boardW + 20, 10, Math.max(10, canvas.width - (offsetX + boardW + 30)), canvas.height - 20, _t('next'));
+            ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; 
+            ctx.font = '22px Inter'; ctx.fillText(`${_t('score')}: ${score.toLocaleString()}`, offsetX / 2, 180);
+            ctx.fillText(`${_t('level')}: ${level}`, offsetX / 2, 240);
+            ctx.fillText(`${_t('lines')}: ${lines}`, offsetX / 2, 300);
             if (nextPiece) drawMatrix(nextPiece.matrix, { x: 0, y: 0 }, offsetX + boardW + (canvas.width - (offsetX + boardW)) / 2 - (BLOCK_SIZE * 2), 150, 0.8);
         } else {
             ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = '900 16px Inter';
-            ctx.fillText(`SKOR: ${score.toLocaleString()}`, canvas.width/4, 45);
-            ctx.fillText(`SEVİYE: ${level}`, canvas.width/2, 45);
-            ctx.fillText(`SATIR: ${lines}`, (canvas.width/4)*3, 45);
+            ctx.fillText(`${_t('score')}: ${score.toLocaleString()}`, canvas.width/4, 45);
+            ctx.fillText(`${_t('level')}: ${level}`, canvas.width/2, 45);
+            ctx.fillText(`${_t('lines')}: ${lines}`, (canvas.width/4)*3, 45);
         }
 
         ctx.strokeStyle = '#bc13fe'; ctx.lineWidth = 4; ctx.strokeRect(offsetX - 3, offsetY - 3, boardW + 6, boardH + 6);
@@ -150,17 +163,18 @@
         if (isPaused) {
             ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(0,0,canvas.width, canvas.height);
             ctx.fillStyle = '#fff'; ctx.font = 'bold 40px Inter'; ctx.textAlign = 'center';
-            ctx.fillText('DURAKLATILDI', canvas.width/2, canvas.height/2);
+            ctx.fillText(_t('paused'), canvas.width/2, canvas.height/2);
         }
         if (gameOver) {
             ctx.fillStyle = 'rgba(0,0,0,0.95)'; ctx.fillRect(0,0,canvas.width, canvas.height);
             ctx.fillStyle = '#ff0077'; ctx.font = 'bold 50px Inter'; ctx.textAlign = 'center';
-            ctx.fillText('OYUN BİTTİ', canvas.width/2, canvas.height/2);
+            ctx.fillText(_t('game_over'), canvas.width/2, canvas.height/2);
         }
         ctx.restore();
     }
 
     function drawMatrix(matrix, offset, offsetX, offsetY, scale = 1) {
+        if (!matrix) return;
         matrix.forEach((row, y) => {
             row.forEach((value, x) => {
                 if (value !== 0) {
@@ -169,6 +183,13 @@
                 }
             });
         });
+    }
+
+    function drawCyberPanel(ctx, x, y, w, h, title) {
+        if (w < 1) return;
+        ctx.save(); ctx.fillStyle = 'rgba(0, 242, 255, 0.05)'; ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = 'rgba(0, 242, 255, 0.3)'; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, h);
+        ctx.fillStyle = 'rgba(0, 242, 255, 0.8)'; ctx.font = '900 12px Inter'; ctx.fillText(title, x + 15, y + 30); ctx.restore();
     }
 
     function update(time = 0) {
@@ -189,8 +210,6 @@
         else if (e.keyCode === 32) playerHardDrop();
     });
 
-    // MOBILE CONTROLS: TAP = HARD DROP, SWIPE = MOVE
-    let touchStartX = 0; let touchStartY = 0; let touchStartTime = 0;
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault(); touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; touchStartTime = Date.now();
     }, {passive: false});
@@ -206,31 +225,23 @@
         const duration = Date.now() - touchStartTime;
         const touchX = e.changedTouches[0].clientX; const touchY = e.changedTouches[0].clientY;
         const dist = Math.hypot(touchX - touchStartX, touchY - touchStartY);
-        if (duration < 250 && dist < 20) playerHardDrop(); // TAP = HARD DROP
+        if (duration < 250 && dist < 20) playerHardDrop();
     }, {passive: false});
 
     function setupMobileControls() {
-        const isTouch = window.matchMedia("(pointer: coarse)").matches || window.innerWidth <= 1366;
+        const isTouch = window.matchMedia("(pointer: coarse)").matches;
         if (!isTouch) return;
         const container = document.getElementById('game-canvas-container');
         if (!container) return;
         const old = document.getElementById('tetris-mobile-ui'); if (old) old.remove();
-
-        const ui = document.createElement('div');
-        ui.id = 'tetris-mobile-ui';
+        const ui = document.createElement('div'); ui.id = 'tetris-mobile-ui';
         ui.style = "position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:9999;";
-
-        const pauseBtn = document.createElement('div');
-        pauseBtn.id = 'mobile-pause-btn'; pauseBtn.innerHTML = "⏸";
+        const pauseBtn = document.createElement('div'); pauseBtn.id = 'mobile-pause-btn'; pauseBtn.innerHTML = "⏸";
         pauseBtn.style = "position:absolute;top:15px;left:15px;width:50px;height:50px;background:rgba(255,255,255,0.1);border:1px solid #fff;border-radius:10px;color:white;display:flex;align-items:center;justify-content:center;font-size:1.2rem;pointer-events:auto;";
         pauseBtn.addEventListener('touchstart', (e) => { e.preventDefault(); isPaused = !isPaused; pauseBtn.innerHTML = isPaused ? "▶" : "⏸"; }, {passive: false});
-
-        const magicBtn = document.createElement('div');
-        magicBtn.innerHTML = "DEĞİŞTİR"; magicBtn.style = "position:absolute;top:15px;right:15px;width:85px;height:85px;background:rgba(255,0,119,0.25);border:2px solid #ff0077;border-radius:18px;color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;pointer-events:auto;box-shadow:0 0 20px #ff0077;animation: magicPulse 1s infinite;";
+        const magicBtn = document.createElement('div'); magicBtn.innerHTML = "DEĞİŞTİR"; magicBtn.style = "position:absolute;top:15px;right:15px;width:85px;height:85px;background:rgba(255,0,119,0.25);border:2px solid #ff0077;border-radius:18px;color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;pointer-events:auto;box-shadow:0 0 20px #ff0077;animation: magicPulse 1s infinite;";
         magicBtn.addEventListener('touchstart', (e) => { e.preventDefault(); magicSwap(); }, {passive: false});
-
-        ui.appendChild(pauseBtn); ui.appendChild(magicBtn);
-        container.appendChild(ui);
+        ui.appendChild(pauseBtn); ui.appendChild(magicBtn); container.appendChild(ui);
     }
 
     function init() { resetGrid(); playerReset(); update(); resize(); }
