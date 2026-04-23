@@ -91,10 +91,16 @@
                     if (!isMobile) return;
 
                     const currentGame = localStorage.getItem('retroArcade_currentGame');
-                    const isTetris = currentGame === 'tetris-pro';
+                    const isTetris = currentGame === 'tetris-pro' || document.title.toLowerCase().includes('tetris');
                     const rotateOverlay = document.getElementById('rotate-overlay');
 
-                    if (!isTetris && window.innerHeight > window.innerWidth) {
+                    // TETRIS ASLA EKRAN ÇEVİR DEMEZ!
+                    if (isTetris) {
+                        rotateOverlay.style.display = 'none';
+                        return;
+                    }
+
+                    if (window.innerHeight > window.innerWidth) {
                         rotateOverlay.style.display = 'flex';
                     } else {
                         rotateOverlay.style.display = 'none';
