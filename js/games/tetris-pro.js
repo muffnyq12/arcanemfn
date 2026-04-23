@@ -99,10 +99,8 @@
     function playerMove(dir) { if (isPaused) return; player.pos.x += dir; if (collide(grid, player)) player.pos.x -= dir; }
     function magicSwap() {
         if (isPaused) return;
-        const newType = Math.floor(Math.random() * 7) + 1;
-        player.type = newType; player.matrix = SHAPES[newType];
-        if (collide(grid, player)) playerReset();
-        shake = 10;
+        playerRotate(1); // Yatay bloğu dik yap, dik bloğu yatay yap
+        shake = 5;
     }
 
     function gridSweep() {
