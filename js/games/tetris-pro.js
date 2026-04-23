@@ -1,6 +1,6 @@
 (function() {
     /**
-     * TETRIS PRO: NEON ULTIMATE - MOBILE ADAPTIVE ENGINE
+     * TETRIS PRO: NEON ULTIMATE - TR LOCALIZED & CLEAN HUD
      */
     const canvas = document.getElementById('gameCanvas');
     if (!canvas) return;
@@ -17,9 +17,7 @@
     let lastTime = 0; let shake = 0;
 
     let bgParticles = [];
-    for(let i=0; i<50; i++) {
-        bgParticles.push({ x: Math.random() * 2000, y: Math.random() * 2000, s: Math.random() * 2 + 1, v: Math.random() * 0.4 + 0.1 });
-    }
+    for(let i=0; i<50; i++) bgParticles.push({ x: Math.random() * 2000, y: Math.random() * 2000, s: Math.random() * 2 + 1, v: Math.random() * 0.4 + 0.1 });
 
     const COLORS = [null, '#00f2ff', '#0077ff', '#ffaa00', '#ffff00', '#39ff14', '#bc13fe', '#ff0077'];
     const SHAPES = [null, 
@@ -38,20 +36,12 @@
     function resize() {
         const container = document.getElementById('game-canvas-container');
         if (container) {
-            canvas.width = container.offsetWidth;
-            canvas.height = container.offsetHeight;
-            
+            canvas.width = container.offsetWidth; canvas.height = container.offsetHeight;
             const isMobile = window.innerWidth < 768;
             if (isMobile) {
-                // Mobile: Calculate based on width mostly
                 BLOCK_SIZE = Math.floor((canvas.width * 0.95) / COLS);
-                // Ensure it doesn't overflow height
-                if (BLOCK_SIZE * ROWS > canvas.height * 0.7) {
-                    BLOCK_SIZE = Math.floor((canvas.height * 0.7) / ROWS);
-                }
-            } else {
-                BLOCK_SIZE = Math.floor((canvas.height * 0.98) / ROWS);
-            }
+                if (BLOCK_SIZE * ROWS > canvas.height * 0.75) BLOCK_SIZE = Math.floor((canvas.height * 0.75) / ROWS);
+            } else BLOCK_SIZE = Math.floor((canvas.height * 0.98) / ROWS);
         }
     }
 
@@ -95,8 +85,7 @@
     function playerRotate(dir) {
         const pos = player.pos.x; let offset = 1; rotate(player.matrix, dir);
         while (collide(grid, player)) {
-            player.pos.x += offset;
-            offset = -(offset + (offset > 0 ? 1 : -1));
+            player.pos.x += offset; offset = -(offset + (offset > 0 ? 1 : -1));
             if (offset > player.matrix[0].length) { rotate(player.matrix, -dir); player.pos.x = pos; return; }
         }
     }
@@ -107,27 +96,19 @@
         dropCounter = 0;
     }
 
-    function playerHardDrop() {
-        while (!collide(grid, player)) player.pos.y++;
-        player.pos.y--; merge(grid, player); playerReset(); gridSweep(); shake = 15;
-    }
-
+    function playerHardDrop() { while (!collide(grid, player)) player.pos.y++; player.pos.y--; merge(grid, player); playerReset(); gridSweep(); shake = 15; }
     function playerMove(dir) { player.pos.x += dir; if (collide(grid, player)) player.pos.x -= dir; }
-
     function playerHold() {
         if (!canHold) return;
         if (holdPiece === null) { holdPiece = player.type; playerReset(); }
-        else {
-            const temp = player.type; player.type = holdPiece; player.matrix = SHAPES[holdPiece]; holdPiece = temp;
-            player.pos.y = 0; player.pos.x = Math.floor(COLS / 2) - Math.floor(player.matrix[0].length / 2);
-        }
+        else { const t = player.type; player.type = holdPiece; player.matrix = SHAPES[holdPiece]; holdPiece = t; player.pos.y = 0; player.pos.x = Math.floor(COLS/2)-Math.floor(player.matrix[0].length/2); }
         canHold = false;
     }
 
     function gridSweep() {
         let rowCount = 1;
         outer: for (let y = ROWS - 1; y > 0; --y) {
-            for (let x = 0; x < COLS; ++x) { if (grid[y][x] === 0) continue outer; }
+            for (let x = 0; x < COLS; ++x) if (grid[y][x] === 0) continue outer;
             grid.unshift(grid.splice(y, 1)[0].fill(0)); ++y;
             score += rowCount * 100 * level; rowCount *= 2; lines++;
             if (lines % 10 === 0) { level++; dropInterval = Math.max(100, 1000 - (level * 50)); }
@@ -137,46 +118,34 @@
     function draw() {
         ctx.save();
         if (shake > 0) { ctx.translate(Math.random()*shake-shake/2, Math.random()*shake-shake/2); shake *= 0.9; }
-
         ctx.fillStyle = '#010103'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        bgParticles.forEach(p => {
-            ctx.fillStyle = 'rgba(0, 242, 255, 0.2)'; ctx.fillRect(p.x % canvas.width, p.y % canvas.height, p.s, p.s); p.y += p.v;
-        });
+        bgParticles.forEach(p => { ctx.fillStyle = 'rgba(0, 242, 255, 0.2)'; ctx.fillRect(p.x % canvas.width, p.y % canvas.height, p.s, p.s); p.y += p.v; });
 
         const isMobile = canvas.width < 768;
-        const boardWidth = COLS * BLOCK_SIZE;
-        const boardHeight = ROWS * BLOCK_SIZE;
-        const offsetX = (canvas.width - boardWidth) / 2;
-        const offsetY = isMobile ? 80 : (canvas.height - boardHeight) / 2;
+        const boardW = COLS * BLOCK_SIZE; const boardH = ROWS * BLOCK_SIZE;
+        const offsetX = (canvas.width - boardW) / 2;
+        const offsetY = isMobile ? 85 : (canvas.height - boardH) / 2;
 
         if (!isMobile) {
-            // PC Layout: Side Panels
-            const panelWidthLeft = offsetX - 5;
-            const panelWidthRight = (canvas.width - (offsetX + boardWidth)) - 5;
-            drawCyberPanel(ctx, 0, 0, panelWidthLeft, canvas.height, 'SYSTEM DATA CORE');
-            drawCyberPanel(ctx, offsetX + boardWidth + 5, 0, panelWidthRight, canvas.height, 'TACTICAL SENSORS');
-
-            // Stats (Left)
-            const leftMidX = panelWidthLeft / 2;
-            ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = 'bold 32px Inter';
-            ctx.fillText('MISSION STATS', leftMidX, 100);
-            ctx.font = '24px Inter'; ctx.fillText(`SCORE: ${score.toLocaleString()}`, leftMidX, 180);
-            // ... (Rest of PC draw as before)
+            drawCyberPanel(ctx, 0, 0, offsetX - 10, canvas.height, 'SİSTEM VERİLERİ');
+            drawCyberPanel(ctx, offsetX + boardW + 10, 0, canvas.width - (offsetX + boardW + 10), canvas.height, 'TAKTIK RADAR');
+            ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = 'bold 30px Inter';
+            ctx.fillText('GÖREV İSTATİSTİĞİ', offsetX / 2, 100);
+            ctx.font = '22px Inter'; ctx.fillText(`SKOR: ${score.toLocaleString()}`, offsetX / 2, 180);
+            ctx.fillText(`SEVİYE: ${level}`, offsetX / 2, 240);
+            ctx.fillText(`SATIR: ${lines}`, offsetX / 2, 300);
+            ctx.font = 'bold 18px Inter'; ctx.fillText('SIRADAKİ', offsetX + boardW + (canvas.width - (offsetX + boardW)) / 2, 100);
+            if (nextPiece) drawMatrix(nextPiece.matrix, { x: 0, y: 0 }, offsetX + boardW + (canvas.width - (offsetX + boardW)) / 2 - (BLOCK_SIZE * 2), 150, 0.8);
         } else {
-            // MOBILE Layout: Compact
-            ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = 'bold 20px Inter';
-            ctx.fillText(`SCORE: ${score.toLocaleString()}`, canvas.width/4, 40);
-            ctx.fillText(`LVL: ${level}`, canvas.width/2, 40);
-            ctx.fillText(`LINES: ${lines}`, (canvas.width/4)*3, 40);
-            
-            // Next Piece Preview at the top right
-            ctx.font = 'bold 12px Inter'; ctx.fillText('NEXT', canvas.width - 40, 70);
-            if (nextPiece) drawMatrix(nextPiece.matrix, { x: 0, y: 0 }, canvas.width - 70, 80, 0.7);
+            ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = '900 16px Inter';
+            ctx.fillText(`SKOR: ${score.toLocaleString()}`, canvas.width/4, 45);
+            ctx.fillText(`SEVİYE: ${level}`, canvas.width/2, 45);
+            ctx.fillText(`SATIR: ${lines}`, (canvas.width/4)*3, 45);
+            ctx.font = 'bold 10px Inter'; ctx.fillText('SIRADAKİ', canvas.width - 45, 80);
+            if (nextPiece) drawMatrix(nextPiece.matrix, { x: 0, y: 0 }, canvas.width - 80, 95, 0.6);
         }
 
-        // Board Border
-        ctx.strokeStyle = '#bc13fe'; ctx.lineWidth = 6; ctx.strokeRect(offsetX - 3, offsetY - 3, boardWidth + 6, boardHeight + 6);
-
+        ctx.strokeStyle = '#bc13fe'; ctx.lineWidth = 4; ctx.strokeRect(offsetX - 3, offsetY - 3, boardW + 6, boardH + 6);
         drawMatrix(grid, { x: 0, y: 0 }, offsetX, offsetY);
         const ghost = { ...player, pos: { ...player.pos } };
         while (!collide(grid, ghost)) ghost.pos.y++;
@@ -186,28 +155,22 @@
         if (gameOver) {
             ctx.fillStyle = 'rgba(0,0,0,0.95)'; ctx.fillRect(0,0,canvas.width, canvas.height);
             ctx.fillStyle = '#ff0077'; ctx.font = 'bold 50px Inter'; ctx.textAlign = 'center';
-            ctx.fillText('TERMINATED', canvas.width/2, canvas.height/2);
+            ctx.fillText('BAĞLANTI KESİLDİ', canvas.width/2, canvas.height/2);
         }
         ctx.restore();
     }
 
     function drawCyberPanel(ctx, x, y, w, h, title) {
         ctx.save(); ctx.fillStyle = 'rgba(0, 242, 255, 0.05)'; ctx.fillRect(x, y, w, h);
-        ctx.strokeStyle = 'rgba(0, 242, 255, 0.3)'; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
-        ctx.strokeStyle = '#00f2ff'; ctx.lineWidth = 5; const cl = 50;
-        ctx.beginPath(); ctx.moveTo(x, y+cl); ctx.lineTo(x, y); ctx.lineTo(x+cl, y); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(x+w-cl, y); ctx.lineTo(x+w, y); ctx.lineTo(x+w, y+cl); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(x+w, y+h-cl); ctx.lineTo(x+w, y+h); ctx.lineTo(x+w-cl, y+h); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(x, y+h-cl); ctx.lineTo(x, y+h); ctx.lineTo(x+cl, y+h); ctx.stroke();
-        ctx.fillStyle = 'rgba(0, 242, 255, 0.8)'; ctx.font = '900 14px Inter'; ctx.textAlign = 'left';
-        ctx.fillText(title, x + 20, y + 30); ctx.restore();
+        ctx.strokeStyle = 'rgba(0, 242, 255, 0.3)'; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, h);
+        ctx.fillStyle = 'rgba(0, 242, 255, 0.8)'; ctx.font = '900 12px Inter'; ctx.fillText(title, x + 15, y + 30); ctx.restore();
     }
 
     function drawMatrix(matrix, offset, offsetX, offsetY, scale = 1) {
         matrix.forEach((row, y) => {
             row.forEach((value, x) => {
                 if (value !== 0) {
-                    const size = BLOCK_SIZE * scale; const px = offsetX + (x + offset.x) * BLOCK_SIZE; const py = offsetY + (y + offset.y) * BLOCK_SIZE;
+                    const size = BLOCK_SIZE * scale; const px = offsetX + (x + offset.x) * size; const py = offsetY + (y + offset.y) * size;
                     ctx.fillStyle = COLORS[value]; ctx.fillRect(px + 1, py + 1, size - 2, size - 2);
                 }
             });
@@ -233,8 +196,8 @@
         const container = document.getElementById('game-canvas-container'); if (!container) return;
         const old = document.getElementById('tetris-mobile-ui'); if (old) old.remove();
         const mobileUI = document.createElement('div'); mobileUI.id = 'tetris-mobile-ui';
-        mobileUI.style = "position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:10px;pointer-events:auto;z-index:100;padding:10px;flex-wrap:wrap;";
-        const btnStyle = "width:55px;height:55px;background:rgba(0,242,255,0.1);border:3px solid #00f2ff;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:bold;cursor:pointer;user-select:none;touch-action:manipulation;box-shadow:0 0 15px #00f2ff;";
+        mobileUI.style = "position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:8px;pointer-events:auto;z-index:100;padding:5px;";
+        const btnStyle = "width:50px;height:50px;background:rgba(0,242,255,0.1);border:2px solid #00f2ff;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:bold;user-select:none;touch-action:manipulation;box-shadow:0 0 10px #00f2ff;";
         [{l:'←',a:()=>playerMove(-1)},{l:'↻',a:()=>playerRotate(1)},{l:'→',a:()=>playerMove(1)},{l:'↓',a:()=>playerDrop()},{l:'⤓',a:()=>playerHardDrop()},{l:'H',a:()=>playerHold()}].forEach(b=>{
             const btn=document.createElement('div');btn.innerHTML=b.l;btn.style=btnStyle;btn.onclick=(e)=>{e.preventDefault();b.a()};btn.ontouchstart=(e)=>{e.preventDefault();b.a()};mobileUI.appendChild(btn);
         });
