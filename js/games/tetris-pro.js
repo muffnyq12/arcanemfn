@@ -1,6 +1,6 @@
 (function() {
     /**
-     * TETRIS PRO: NEON ULTIMATE - PAUSE/RESUME & GESTURE EDITION
+     * TETRIS PRO: NEON ULTIMATE - TAP-TO-DROP & MAGIC SWAP EDITION
      */
     const canvas = document.getElementById('gameCanvas');
     if (!canvas) return;
@@ -37,8 +37,8 @@
             canvas.width = container.offsetWidth; canvas.height = container.offsetHeight;
             const isMobile = window.innerWidth <= 1366;
             if (isMobile) {
-                BLOCK_SIZE = Math.floor((canvas.width * 0.90) / COLS);
-                if (BLOCK_SIZE * ROWS > canvas.height * 0.50) BLOCK_SIZE = Math.floor((canvas.height * 0.50) / ROWS);
+                BLOCK_SIZE = Math.floor((canvas.width * 0.92) / COLS);
+                if (BLOCK_SIZE * ROWS > canvas.height * 0.75) BLOCK_SIZE = Math.floor((canvas.height * 0.75) / ROWS);
             } else BLOCK_SIZE = Math.floor((canvas.height * 0.98) / ROWS);
             setupMobileControls();
         }
@@ -97,13 +97,6 @@
 
     function playerHardDrop() { if (isPaused) return; while (!collide(grid, player)) player.pos.y++; player.pos.y--; merge(grid, player); playerReset(); gridSweep(); shake = 15; }
     function playerMove(dir) { if (isPaused) return; player.pos.x += dir; if (collide(grid, player)) player.pos.x -= dir; }
-    function playerHold() {
-        if (!canHold || isPaused) return;
-        if (holdPiece === null) { holdPiece = player.type; playerReset(); }
-        else { const t = player.type; player.type = holdPiece; player.matrix = SHAPES[holdPiece]; holdPiece = t; player.pos.y = 0; player.pos.x = Math.floor(COLS/2)-Math.floor(player.matrix[0].length/2); }
-        canHold = false;
-    }
-
     function magicSwap() {
         if (isPaused) return;
         const newType = Math.floor(Math.random() * 7) + 1;
@@ -127,7 +120,7 @@
         if (shake > 0) { ctx.translate(Math.random()*shake-shake/2, Math.random()*shake-shake/2); shake *= 0.9; }
         ctx.fillStyle = '#010103'; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        const isMobile = window.innerWidth <= 1024;
+        const isMobile = window.innerWidth <= 1366;
         const boardW = COLS * BLOCK_SIZE; const boardH = ROWS * BLOCK_SIZE;
         const offsetX = (canvas.width - boardW) / 2;
         const offsetY = isMobile ? 85 : (canvas.height - boardH) / 2;
@@ -161,19 +154,12 @@
             ctx.fillStyle = '#fff'; ctx.font = 'bold 40px Inter'; ctx.textAlign = 'center';
             ctx.fillText('DURAKLATILDI', canvas.width/2, canvas.height/2);
         }
-
         if (gameOver) {
             ctx.fillStyle = 'rgba(0,0,0,0.95)'; ctx.fillRect(0,0,canvas.width, canvas.height);
             ctx.fillStyle = '#ff0077'; ctx.font = 'bold 50px Inter'; ctx.textAlign = 'center';
             ctx.fillText('OYUN BİTTİ', canvas.width/2, canvas.height/2);
         }
         ctx.restore();
-    }
-
-    function drawCyberPanel(ctx, x, y, w, h, title) {
-        ctx.save(); ctx.fillStyle = 'rgba(0, 242, 255, 0.05)'; ctx.fillRect(x, y, w, h);
-        ctx.strokeStyle = 'rgba(0, 242, 255, 0.3)'; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, h);
-        ctx.fillStyle = 'rgba(0, 242, 255, 0.8)'; ctx.font = '900 12px Inter'; ctx.fillText(title, x + 15, y + 30); ctx.restore();
     }
 
     function drawMatrix(matrix, offset, offsetX, offsetY, scale = 1) {
@@ -189,12 +175,8 @@
 
     function update(time = 0) {
         const deltaTime = time - lastTime; lastTime = time; 
-        if (!isPaused) {
-            dropCounter += deltaTime;
-            if (dropCounter > dropInterval) playerDrop();
-        }
-        draw(); 
-        if (!gameOver) requestAnimationFrame(update);
+        if (!isPaused) { dropCounter += deltaTime; if (dropCounter > dropInterval) playerDrop(); }
+        draw(); if (!gameOver) requestAnimationFrame(update);
     }
 
     function endGame() { setTimeout(() => { const overlay = document.getElementById('play-overlay'); if (overlay) overlay.style.display = 'flex'; }, 1500); }
@@ -206,9 +188,10 @@
         if (isPaused) return;
         if (e.keyCode === 37) playerMove(-1); else if (e.keyCode === 39) playerMove(1);
         else if (e.keyCode === 40) playerDrop(); else if (e.keyCode === 38) playerRotate(1);
-        else if (e.keyCode === 32) playerHardDrop(); else if (e.keyCode === 16 || e.keyCode === 67) playerHold();
+        else if (e.keyCode === 32) playerHardDrop();
     });
 
+    // MOBILE CONTROLS: TAP = HARD DROP, SWIPE = MOVE
     let touchStartX = 0; let touchStartY = 0; let touchStartTime = 0;
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault(); touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; touchStartTime = Date.now();
@@ -222,15 +205,15 @@
 
     canvas.addEventListener('touchend', (e) => {
         e.preventDefault(); if (gameOver || isPaused) return;
-        const duration = Date.now() - touchStartTime; const touchX = e.changedTouches[0].clientX; const touchY = e.changedTouches[0].clientY;
+        const duration = Date.now() - touchStartTime;
+        const touchX = e.changedTouches[0].clientX; const touchY = e.changedTouches[0].clientY;
         const dist = Math.hypot(touchX - touchStartX, touchY - touchStartY);
-        if (duration < 200 && dist < 20) playerHardDrop();
+        if (duration < 250 && dist < 20) playerHardDrop(); // TAP = HARD DROP
     }, {passive: false});
 
     function setupMobileControls() {
-        const isTouch = window.matchMedia("(pointer: coarse)").matches;
-        const isMobileSize = window.innerWidth <= 1366;
-        if (!isTouch && !isMobileSize) return;
+        const isTouch = window.matchMedia("(pointer: coarse)").matches || window.innerWidth <= 1366;
+        if (!isTouch) return;
         const container = document.getElementById('game-canvas-container');
         if (!container) return;
         const old = document.getElementById('tetris-mobile-ui'); if (old) old.remove();
@@ -239,28 +222,16 @@
         ui.id = 'tetris-mobile-ui';
         ui.style = "position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:9999;";
 
-        const bottomBar = document.createElement('div');
-        bottomBar.style = "position:absolute;bottom:25px;left:0;right:0;display:flex;justify-content:center;gap:15px;pointer-events:none;";
-        const btnStyle = "width:60px;height:60px;background:rgba(0,242,255,0.25);border:2px solid #00f2ff;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:bold;user-select:none;touch-action:manipulation;box-shadow:0 0 15px #00f2ff;pointer-events:auto;";
-        const controls = [ { l: '↻', a: () => playerRotate(1) }, { l: '↓', a: () => playerDrop() }, { l: 'H', a: () => playerHold(), s: true } ];
-        controls.forEach(b => {
-            const btn = document.createElement('div'); btn.innerHTML = b.l; btn.style = b.s ? btnStyle + "border-color:#ff0077;box-shadow:0 0 15px #ff0077;" : btnStyle;
-            const trigger = (e) => { e.preventDefault(); if(!gameOver) b.a(); };
-            btn.addEventListener('touchstart', trigger, {passive: false});
-            btn.addEventListener('mousedown', trigger);
-            bottomBar.appendChild(btn);
-        });
-
         const pauseBtn = document.createElement('div');
         pauseBtn.id = 'mobile-pause-btn'; pauseBtn.innerHTML = "⏸";
         pauseBtn.style = "position:absolute;top:15px;left:15px;width:50px;height:50px;background:rgba(255,255,255,0.1);border:1px solid #fff;border-radius:10px;color:white;display:flex;align-items:center;justify-content:center;font-size:1.2rem;pointer-events:auto;";
         pauseBtn.addEventListener('touchstart', (e) => { e.preventDefault(); isPaused = !isPaused; pauseBtn.innerHTML = isPaused ? "▶" : "⏸"; }, {passive: false});
 
         const magicBtn = document.createElement('div');
-        magicBtn.innerHTML = "DEĞİŞTİR"; magicBtn.style = "position:absolute;top:15px;right:15px;width:70px;height:70px;background:rgba(255,0,119,0.2);border:2px solid #ff0077;border-radius:12px;color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:900;pointer-events:auto;box-shadow:0 0 15px #ff0077;";
+        magicBtn.innerHTML = "DEĞİŞTİR"; magicBtn.style = "position:absolute;top:15px;right:15px;width:85px;height:85px;background:rgba(255,0,119,0.25);border:2px solid #ff0077;border-radius:18px;color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;pointer-events:auto;box-shadow:0 0 20px #ff0077;animation: magicPulse 1s infinite;";
         magicBtn.addEventListener('touchstart', (e) => { e.preventDefault(); magicSwap(); }, {passive: false});
 
-        ui.appendChild(bottomBar); ui.appendChild(pauseBtn); ui.appendChild(magicBtn);
+        ui.appendChild(pauseBtn); ui.appendChild(magicBtn);
         container.appendChild(ui);
     }
 

@@ -125,12 +125,22 @@
 
         ctx.fillStyle = '#010103'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         if (!gameOver) {
+            // MOVEMENT PHYSICS (REDUCED DRIFT)
             if (keys[37] || mobileInput.left) ship.a -= 0.1;
             if (keys[39] || mobileInput.right) ship.a += 0.1;
+            
             ship.thrusting = keys[38] || mobileInput.thrust;
-            if (ship.thrusting) { ship.thrust.x += Math.cos(ship.a) * 0.18; ship.thrust.y += Math.sin(ship.a) * 0.18; }
-            else { ship.thrust.x *= 0.98; ship.thrust.y *= 0.98; }
-            ship.x += ship.thrust.x; ship.y += ship.thrust.y;
+            if (ship.thrusting) { 
+                ship.thrust.x += Math.cos(ship.a) * 0.22; 
+                ship.thrust.y += Math.sin(ship.a) * 0.22; 
+            }
+            
+            // INCREASED FRICTION (PREVENTS SLIDING)
+            ship.thrust.x *= 0.94; 
+            ship.thrust.y *= 0.94;
+
+            ship.x += ship.thrust.x; 
+            ship.y += ship.thrust.y;
             if (ship.x < 0) ship.x = canvas.width; if (ship.x > canvas.width) ship.x = 0;
             if (ship.y < 0) ship.y = canvas.height; if (ship.y > canvas.height) ship.y = 0;
             
