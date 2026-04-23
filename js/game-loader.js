@@ -479,15 +479,22 @@ document.addEventListener('DOMContentLoaded', () => {
         startBtn.addEventListener('click', async () => {
             window.gameStarted = true;
             
-            // LANDSCAPE LOCK FOR MOBILE
+            // SMART ORIENTATION LOCK
             if (window.innerWidth <= 768) {
+                const targetOrientation = (gameId === 'tetris-pro') ? 'portrait' : 'landscape';
+                console.log(`Attempting to lock orientation to: ${targetOrientation}`);
+                
                 try {
                     if (screen.orientation && screen.orientation.lock) {
-                        await screen.orientation.lock('landscape');
+                        await screen.orientation.lock(targetOrientation);
+                    } else if (screen.lockOrientation) {
+                        screen.lockOrientation(targetOrientation);
                     }
-                } catch (e) { console.log("Orientation lock not supported or failed."); }
+                } catch (e) { 
+                    console.log("Auto-lock failed or not supported. Falling back to manual check."); 
+                }
                 
-                checkOrientation(); // İlk kontrol
+                checkOrientation(); // Trigger visual check immediately
             }
 
             playOverlay.style.opacity = '0';
@@ -504,12 +511,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const rotateOverlay = document.getElementById('rotate-overlay');
         if (!rotateOverlay) return;
 
-        if (window.innerHeight > window.innerWidth) {
-            // PORTRAIT MODE - SHOW OVERLAY
-            rotateOverlay.style.display = 'flex';
+        const isTetris = (new URLSearchParams(window.location.search).get('game') === 'tetris-pro');
+        const isPortrait = window.innerHeight > window.innerWidth;
+
+        if (isTetris) {
+            // TETRIS: Should be PORTRAIT. Show overlay if LANDSCAPE.
+            rotateOverlay.style.display = isPortrait ? 'none' : 'flex';
         } else {
-            // LANDSCAPE MODE - HIDE OVERLAY
-            rotateOverlay.style.display = 'none';
+            // OTHERS: Should be LANDSCAPE. Show overlay if PORTRAIT.
+            rotateOverlay.style.display = isPortrait ? 'flex' : 'none';
         }
     }
 
