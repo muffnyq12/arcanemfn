@@ -72,15 +72,22 @@ function syncWithCloud() {
             if (document.getElementById('main-game-grid')) renderGames();
         }
 
+        // 7. Disabled Games Sync (Real-time Hide/Show)
+        const oldDisabled = JSON.stringify(siteConfig.disabledGames || []);
+        const newDisabled = JSON.stringify(config.disabledGames || []);
+        if (oldDisabled !== newDisabled) {
+            siteConfig.disabledGames = config.disabledGames || [];
+            localStorage.setItem('retroArcade_disabledGames', newDisabled);
+            if (document.getElementById('main-game-grid')) renderGames();
+        }
+
         // 6. Leaderboard Sync Logic
         window.leaderboardActive = config.leaderboardActive !== false;
         const targetLeaderboard = config.leaderboardGame || config.featuredGame;
 
         if (!window.leaderboardActive) {
-            // IF DISABLED: Show message and STOP everything else
             renderLeaderboard({}, null, true);
         } else {
-            // IF ENABLED: Setup sync and render
             if (targetLeaderboard && targetLeaderboard !== window.currentLeaderboardGame) {
                 window.currentLeaderboardGame = targetLeaderboard;
                 setupLeaderboardSync(targetLeaderboard);
@@ -88,6 +95,9 @@ function syncWithCloud() {
                 renderLeaderboard(window.lastLeaderboardData, window.currentLeaderboardGame);
             }
         }
+
+        // RE-APPLY Inventory Themes after cloud sync to ensure override
+        applyInventoryEffects();
         
     }, (error) => {
         console.error("Firebase Sync Error:", error);
@@ -137,6 +147,14 @@ const gamesData = {
         file: 'js/games/block-blast-pro.js', 
         desc: 'Strateji ve hızın buluştuğu siber bir bulmaca. Blokları yerleştir, ekranı sarsan patlamalar yarat ve rekorları kır. Gravity yok, sadece saf strateji!', 
         tag: 'CYBER PUZZLE' 
+    },
+    'shooting-range-pro': { 
+        title: 'Cyber Range: Tactical Shooter', 
+        subtitle: 'Siber Poligon Deneyimi', 
+        instructions: '<ul><li><b>Fare / Dokunmatik:</b> Nişan al ve ateş et</li><li><b>R Tuşu:</b> Şarjör değiştir</li><li><b>1-2-3 Tuşları:</b> Silah değiştir (Pistol, SMG, Sniper)</li><li><b>Görev:</b> Hedefleri süreleri dolmadan vur, headshot yaparak puanını katla!</li></ul>', 
+        file: 'js/games/shooting-range-pro.js', 
+        desc: 'Tam donanımlı bir siber poligon. Farklı silah modları, geri tepme mekanikleri ve kombo sistemiyle atış yeteneklerini test et. En iyi atıcı liderlik tablosuna adını yazar!', 
+        tag: 'TACTICAL' 
     }
 };
 
@@ -163,13 +181,16 @@ let siteConfig = {
 
 let userStats = {
     xp: 0, level: 1, tokens: 0, lastReward: null, inventory: [],
-    activeQuests: [], // Now an array of 2 quests
-    lastQuestDate: null
+    activeQuests: [], 
+    lastQuestDate: null,
+    pinkEnabled: true // State of the toggle
 };
 
 function loadAll() {
     const savedConfig = localStorage.getItem('retroArcade_config');
     if (savedConfig) siteConfig = JSON.parse(savedConfig);
+    const cachedDisabled = localStorage.getItem('retroArcade_disabledGames');
+    if (cachedDisabled) siteConfig.disabledGames = JSON.parse(cachedDisabled);
 
     if (siteConfig.maintenanceMode && !window.location.pathname.includes('admin.html')) {
         showMaintenanceScreen();
@@ -184,6 +205,7 @@ function loadAll() {
         userStats = JSON.parse(savedStats);
         if (!userStats.inventory) userStats.inventory = [];
         if (!userStats.activeQuests) userStats.activeQuests = [];
+        if (userStats.pinkEnabled === undefined) userStats.pinkEnabled = true;
     }
     
     checkDailyQuestReset();
@@ -247,6 +269,7 @@ function showMaintenanceScreen() {
 function applyTheme(event) {
     document.body.className = "theme-" + event;
     applyEventTheme();
+    applyInventoryEffects(); // Ensure inventory override
 }
 
 function applyEventTheme() {
@@ -336,11 +359,55 @@ function saveStats() {
 }
 
 function applyInventoryEffects() {
-    if (userStats.inventory.includes('theme-pink')) {
-        document.documentElement.style.setProperty('--neon-blue', '#ff00ff');
-        document.documentElement.style.setProperty('--neon-purple', '#ff0077');
+    if (userStats.inventory.includes('theme-pink') && userStats.pinkEnabled) {
+        document.body.classList.add('pink-mode');
+        console.info("🌸 NEON PINK MODE: ON");
+    } else {
+        document.body.classList.remove('pink-mode');
     }
+    renderPinkToggle();
 }
+
+function renderPinkToggle() {
+    const container = document.querySelector('.user-stats');
+    if (!container || !userStats.inventory.includes('theme-pink')) return;
+    
+    let toggle = document.getElementById('pink-toggle-btn');
+    if (!toggle) {
+        toggle = document.createElement('button');
+        toggle.id = 'pink-toggle-btn';
+        toggle.style.cssText = "margin-left:15px; padding:5px 10px; font-size:0.6rem; font-weight:900; border-radius:8px; border:1px solid #ff00ff; background:transparent; color:#ff00ff; cursor:pointer; transition:0.3s;";
+        container.appendChild(toggle);
+    }
+    
+    toggle.innerText = userStats.pinkEnabled ? 'PINK: ON' : 'PINK: OFF';
+    toggle.style.background = userStats.pinkEnabled ? '#ff00ff' : 'transparent';
+    toggle.style.color = userStats.pinkEnabled ? '#000' : '#ff00ff';
+    
+    toggle.onclick = (e) => {
+        e.preventDefault();
+        userStats.pinkEnabled = !userStats.pinkEnabled;
+        saveStats();
+        applyInventoryEffects();
+    };
+}
+
+window.buyItem = function(id, price) {
+    if (userStats.inventory.includes(id)) {
+        alert("Zaten bu öğeye sahipsin kral!");
+        return;
+    }
+    if (userStats.tokens >= price) {
+        userStats.tokens -= price;
+        userStats.inventory.push(id);
+        if (id === 'theme-pink') userStats.pinkEnabled = true; // Auto-enable on buy
+        saveStats();
+        applyInventoryEffects();
+        alert("Satın alma başarılı! 🎉 Hayırlı olsun.");
+    } else {
+        alert("Yeterli Token'ın yok! Daha fazla oyun oynamalısın. 🪙");
+    }
+};
 
 function updateUI() {
     const xpFills = document.querySelectorAll('.xp-bar-fill');
@@ -507,7 +574,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             playOverlay.style.opacity = '0';
             setTimeout(() => playOverlay.style.display = 'none', 500);
-            pauseBtn.style.display = 'block';
+            const isBlockBlast = (new URLSearchParams(window.location.search).get('game') === 'block-blast-pro');
+            pauseBtn.style.display = isBlockBlast ? 'none' : 'block';
+            
+            pauseBtn.onclick = () => {
+                if (window.togglePause) {
+                    const isPaused = window.togglePause();
+                    pauseBtn.innerText = isPaused ? '▶️ DEVAM ET' : '⏸️ DURDUR';
+                    pauseBtn.style.background = isPaused ? 'var(--neon-green)' : 'var(--neon-pink)';
+                }
+            };
             if (gameId) trackPlay(gameId);
         });
     }
@@ -601,6 +677,22 @@ function loadGame(scriptPath) {
     script.id = 'game-script';
     script.src = scriptPath + "?v=" + Date.now();
     document.body.appendChild(script);
+
+    // 4. DISPLAY LAST SCORE IF EXISTS
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeGameId = urlParams.get('game') || localStorage.getItem('retroArcade_currentGame');
+    if (activeGameId) {
+        const lastScore = localStorage.getItem('retroArcade_lastScore_' + activeGameId);
+        if (lastScore) {
+            console.log("Found Last Score for", activeGameId, ":", lastScore);
+            showLastScoreOverlay(lastScore);
+        }
+    }
+}
+
+function showLastScoreOverlay(score) {
+    // DOM overlay disabled in favor of Canvas-based HUD for better performance and stability
+    console.log("HUD Update (Canvas):", score);
 }
 
 function loadRelated(currentGameId) {
@@ -709,20 +801,29 @@ window.saveNickname = function() {
 
 // Update Global Save Score Function to use real name
 window.saveUserScore = function(score) {
+    if (score < 0) return; // Allow 0 if explicitly saving
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeGameId = urlParams.get('game');
+    if (activeGameId) {
+        localStorage.setItem('retroArcade_lastScore_' + activeGameId, score);
+        console.log("Score saved locally:", activeGameId, score);
+        
+        // Optional Overlay Notification
+        const overlay = document.getElementById('last-score-overlay');
+        if (overlay) {
+            overlay.querySelector('strong').innerText = score.toLocaleString();
+            overlay.style.display = 'flex';
+            setTimeout(() => { overlay.style.opacity = '1'; }, 10);
+        }
+    }
+
+    // 2. CLOUD LEADERBOARD SYNC (Only if nickname exists)
     const username = localStorage.getItem('retroArcade_username');
     const targetGame = window.currentLeaderboardGame;
     
-    console.log("Saving Score:", { username, targetGame, score });
+    if (!username || !targetGame) return; // Silent fail for cloud, local already saved
 
-    if (!username) {
-        alert("Hata: Nickname bulunamadı! Lütfen sayfayı yenileyip isim seç.");
-        return;
-    }
-    if (!targetGame) {
-        alert("Hata: Hangi oyuna skor kaydedileceği buluttan alınamadı! Admin panelinden bir 'Leaderboard Oyunu' seçip kaydedin.");
-        return;
-    }
-    
     const scoreRef = ref(db, `leaderboards/${targetGame}/${username}`);
     
     set(scoreRef, score)

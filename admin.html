@@ -3,182 +3,276 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Control Panel | Retro Arcade Hub</title>
+    <title>Arcade Hub | Admin Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0a0a0a;
-            --card: #151515;
-            --primary: #00f2ff;
-            --accent: #ffd700;
-            --text: #ffffff;
+            --bg-dark: #050507;
+            --panel-bg: #0f0f13;
+            --sidebar-bg: #0a0a0d;
+            --neon-blue: #00f2ff;
+            --neon-pink: #ff0077;
+            --neon-gold: #ffd700;
+            --text-main: #ffffff;
+            --text-dim: #94a3b8;
+            --border: rgba(255, 255, 255, 0.05);
+            --glass: rgba(255, 255, 255, 0.03);
         }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 40px 20px; box-sizing: border-box; overflow-y: auto !important; }
-        .admin-login { background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid var(--primary); text-align: center; width: 100%; max-width: 350px; margin-top: 10vh; }
-        input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #000; color: #fff; box-sizing: border-box; font-size: 16px; /* Mobil yakınlaştırmayı önler */ }
-        button { width: 100%; padding: 14px; background: var(--primary); color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 1rem; }
-        button:hover { transform: scale(1.02); box-shadow: 0 0 15px var(--primary); }
-        
-        .dashboard { display: none; width: 100%; max-width: 800px; background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid var(--accent); box-sizing: border-box; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .section { background: rgba(255,255,255,0.02); padding: 20px; border-radius: 12px; border: 1px solid #222; }
-        h2 { color: var(--accent); margin-top: 0; font-size: 1.5rem; }
-        .save-bar { margin-top: 20px; text-align: right; }
 
-        /* Responsive Fixes */
-        @media (max-width: 768px) {
-            .grid { grid-template-columns: 1fr; }
-            .dashboard { padding: 15px; }
-            .section { padding: 15px; }
-            .save-bar { text-align: center; }
-            .save-bar button { width: 100%; }
-            #analytics-content { grid-template-columns: 1fr !important; }
-            .table-container { overflow-x: auto; width: 100%; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); overflow-x: hidden; }
+
+        /* Login Screen */
+        .login-screen { position: fixed; inset: 0; z-index: 1000; background: var(--bg-dark); display: flex; align-items: center; justify-content: center; }
+        .login-card { background: var(--panel-bg); padding: 40px; border-radius: 24px; border: 1px solid var(--neon-blue); box-shadow: 0 0 50px rgba(0, 242, 255, 0.1); width: 100%; max-width: 400px; text-align: center; }
+        .login-card h1 { font-weight: 900; font-size: 1.8rem; margin-bottom: 10px; background: linear-gradient(to right, #fff, var(--neon-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        /* Dashboard Layout */
+        .layout { display: none; min-height: 100vh; grid-template-columns: 280px 1fr; }
+        
+        /* Sidebar */
+        aside { background: var(--sidebar-bg); border-right: 1px solid var(--border); padding: 30px 20px; display: flex; flex-direction: column; }
+        .logo { font-weight: 900; font-size: 1.2rem; margin-bottom: 40px; padding: 0 10px; color: var(--neon-blue); }
+        .nav-item { padding: 14px 18px; border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: 0.2s; color: var(--text-dim); display: flex; align-items: center; gap: 12px; font-weight: 600; }
+        .nav-item:hover { background: var(--glass); color: #fff; }
+        .nav-item.active { background: rgba(0, 242, 255, 0.1); color: var(--neon-blue); }
+
+        /* Main Content */
+        main { padding: 40px; max-width: 1200px; width: 100%; margin: 0 auto; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        h1 { font-weight: 900; font-size: 2.2rem; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 24px; }
+        .card { background: var(--panel-bg); border-radius: 20px; padding: 24px; border: 1px solid var(--border); position: relative; overflow: hidden; }
+        .card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--neon-blue); opacity: 0.5; }
+        .card h2 { font-size: 1.1rem; font-weight: 800; color: var(--text-dim); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Form Elements */
+        .form-group { margin-bottom: 18px; }
+        label { display: block; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 8px; font-weight: 600; }
+        input, select, textarea { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border); padding: 14px; border-radius: 12px; color: #fff; font-size: 0.95rem; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--neon-blue); box-shadow: 0 0 10px rgba(0, 242, 255, 0.1); }
+        
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+        .toggle-row:last-child { border: none; }
+        
+        /* Switches */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--neon-blue); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        button.primary { background: var(--neon-blue); color: #000; border: none; padding: 16px 32px; border-radius: 14px; font-weight: 900; cursor: pointer; transition: 0.3s; font-size: 1rem; width: 100%; }
+        button.primary:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0, 242, 255, 0.3); }
+
+        /* Analytics */
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-mini { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
+        .stat-mini small { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; }
+        .stat-mini div { font-size: 1.1rem; font-weight: 800; margin-top: 5px; color: var(--neon-blue); }
+
+        /* Notifications (Toast) */
+        #toast { position: fixed; bottom: 30px; right: 30px; background: var(--neon-blue); color: #000; padding: 16px 24px; border-radius: 12px; font-weight: 800; transform: translateY(100px); opacity: 0; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2000; display: flex; align-items: center; gap: 10px; }
+        #toast.show { transform: translateY(0); opacity: 1; }
+
+        /* Game Toggles List */
+        #game-toggle-list { display: grid; gap: 10px; }
+        .game-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: rgba(255,255,255,0.02); border-radius: 10px; }
+
+        /* Tab System */
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Analytics Table */
+        .analytics-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .analytics-table th { text-align: left; padding: 15px; background: rgba(255,255,255,0.03); color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+        .analytics-table td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        .analytics-table tr:hover { background: rgba(255,255,255,0.01); }
+        .trend-up { color: #39ff14; }
+
+        @media (max-width: 900px) {
+            .layout { grid-template-columns: 1fr; }
+            aside { display: none; }
+            main { padding: 20px; }
+            .stat-grid { grid-template-columns: 1fr 1fr; }
         }
     </style>
-    <style>html, body { background: #000 !important; }</style>
-    <!-- THEME BOOTSTRAPPER (Prevents Flickering) -->
-    <script>
-        const cachedTheme = localStorage.getItem('retroArcade_cachedTheme');
-        if (cachedTheme) {
-            document.documentElement.className = 'theme-' + cachedTheme;
-            document.addEventListener('DOMContentLoaded', () => {
-                document.body.className = 'theme-' + cachedTheme;
-            });
-        }
-    </script>
 </head>
 <body>
 
     <!-- Login Area -->
-    <div id="login-area" class="admin-login">
-        <h2>Admin Girişi</h2>
-        <input type="password" id="admin-pass" placeholder="Şifre (Varsayılan: admin123)">
-        <button onclick="login()">Giriş Yap</button>
+    <div class="login-screen" id="login-area">
+        <div class="login-card">
+            <h1>ADMIN TERMINAL</h1>
+            <p style="color: var(--text-dim); margin-bottom: 25px; font-size: 0.9rem;">Sisteme erişmek için kimlik doğrulaması yapın.</p>
+            <input type="password" id="admin-pass" placeholder="Erişim Anahtarı" style="text-align: center; margin-bottom: 20px;">
+            <button class="primary" onclick="login()">SİSTEME GİRİŞ YAP</button>
+        </div>
     </div>
 
-    <!-- Dashboard Area -->
-    <div id="dashboard" class="dashboard">
-        <h2>🚀 Sistem Kontrol Paneli</h2>
-        <div class="grid">
-            <!-- Event / Theme System -->
-            <div class="section">
-                <h3>🎨 Tema Kontrolü (Prototip)</h3>
-                <div style="display: flex; gap: 10px; flex-direction: column;">
-                    <button onclick="setTheme('normal')" style="background: #ccc; color: #000;">Activate Normal</button>
-                    <button onclick="setTheme('easter')" style="background: #ffb6c1; color: #000;">Activate Easter</button>
-                    <button onclick="setTheme('halloween')" style="background: #ff8800; color: #000;">Activate Halloween</button>
+    <!-- Dashboard Layout -->
+    <div class="layout" id="dashboard">
+        <aside>
+            <div class="logo">RETRO ARCADE HUB</div>
+            <div class="nav-item active" onclick="switchTab('tab-dashboard', this)">Dashboard</div>
+            <div class="nav-item" onclick="switchTab('tab-games', this)">Oyun Yönetimi</div>
+            <div class="nav-item" onclick="switchTab('tab-settings', this)">Sistem Ayarları</div>
+            <div class="nav-item" onclick="switchTab('tab-analytics', this)">Analizler</div>
+            <div style="flex: 1;"></div>
+            <div class="nav-item" onclick="location.reload()" style="color: #ff4444;">Çıkış Yap</div>
+        </aside>
+
+        <main>
+            <header>
+                <div>
+                    <h1 id="panel-title">Hoş Geldin, Admin</h1>
+                    <p style="color: var(--text-dim);">Sistem durumu: <span style="color: #39ff14;">AKTİF</span> | Tema: <span id="current-event-display" style="text-transform: uppercase; color: var(--neon-blue);">NORMAL</span></p>
                 </div>
-                <p style="font-size: 0.7rem; color: #888; margin-top: 10px;">Şu anki Event: <span id="current-event-display">normal</span></p>
-            </div>
-
-            <!-- Announcement System -->
-            <div class="section" style="grid-column: span 2; border-color: var(--accent);">
-                <h3>📣 Sistem Duyurusu (Üst Bar)</h3>
-                <label>Duyuru Metni:</label>
-                <input type="text" id="config-announcement" placeholder="Örn: Hafta sonu 2X XP etkinliği başladı!">
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-top: 5px;">
-                    <input type="checkbox" id="config-announcement-active" style="width: auto;"> DUYURUYU AKTİF ET
-                </label>
-            </div>
-
-            <!-- Featured Game -->
-            <div class="section">
-                <h3>🎮 Vitrin Oyun</h3>
-                <label>Featured Game ID:</label>
-                <select id="config-featured">
-                    <option value="slots-pro">Slots Beach: Tropical Pro</option>
-                    <option value="jewels-pro">Jewels Master: Match 3</option>
-                    <option value="tetris-pro">Tetris Pro: Neon Edition</option>
-                    <option value="asteroid-pro">Asteroids: Neon Strike</option>
-                </select>
-            </div>
-
-            <!-- Leaderboard Target -->
-            <div class="section">
-                <h3>🏆 Leaderboard Oyunu</h3>
-                <label>Hangi Oyunun Skorları Görünsün?</label>
-                <select id="config-leaderboard-game">
-                    <option value="slots-pro">Slots Beach</option>
-                    <option value="jewels-pro">Jewels Master</option>
-                    <option value="tetris-pro">Tetris Pro</option>
-                    <option value="asteroid-pro">Asteroids Pro</option>
-                </select>
-            </div>
-
-            <!-- Economy Settings -->
-            <div class="section">
-                <h3>🪙 Ekonomi Ayarları</h3>
-                <label>Para Birimi Adı:</label>
-                <input type="text" id="config-coin-name" placeholder="Örn: Token">
-                <label>Çarpan (Multiplier):</label>
-                <input type="number" id="config-coin-mult" step="0.1" value="1.0">
-            </div>
-
-            <!-- Leaderboard Toggle -->
-            <div class="section" style="border-color: var(--primary);">
-                <h3>🏆 Leaderboard Kontrolü</h3>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                    <input type="checkbox" id="config-leaderboard-active" style="width: auto;" checked> LEADERBOARD AKTİF
-                </label>
-                <p style="font-size: 0.7rem; color: #888; margin-top: 5px;">Kapatılırsa ana sayfada "Şu an kullanılamıyor" mesajı görünür.</p>
-            </div>
-
-            <!-- Maintenance Mode -->
-            <div class="section" style="border-color: #ff0000;">
-                <h3 style="color: #ff0000;">⛔ Sistem Bakım Modu</h3>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                    <input type="checkbox" id="config-maintenance" style="width: auto;"> SİTEYİ BAKIMA AL
-                </label>
-                <p style="font-size: 0.7rem; color: #888; margin-top: 5px;">Aktif edilirse kullanıcılar siteye erişemez.</p>
-            </div>
-
-            <!-- Game Management -->
-            <div class="section">
-                <h3>🎮 Oyun Aktiflik Yönetimi</h3>
-                <div id="game-toggle-list" style="max-height: 150px; overflow-y: auto; text-align: left; font-size: 0.8rem;">
-                    <!-- JS will fill this -->
+                <div style="text-align: right;">
+                    <small style="color: var(--text-dim);">Son Güncelleme</small>
+                    <div style="font-weight: 800; font-size: 0.9rem;">Şimdi</div>
                 </div>
-            </div>
+            </header>
 
-            <!-- Mini Analytics -->
-            <div class="section" style="grid-column: span 2; border-color: var(--primary);">
-                <h3>📊 Mini Analytics (Kullanıcı Verileri)</h3>
-                <div id="analytics-content" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: left;">
-                    <div class="stat-card">
-                        <small>En Çok Oynanan</small>
-                        <h4 id="stat-most-played">-</h4>
+            <div id="tab-dashboard" class="tab-content active">
+                <div class="grid">
+                    <div class="card">
+                        <h2>Sistem Özeti</h2>
+                        <div class="stat-grid">
+                            <div class="stat-mini"><small>Topl. Hit</small><div id="dash-total-clicks">0</div></div>
+                            <div class="stat-mini"><small>Popüler</small><div id="dash-most-popular">-</div></div>
+                        </div>
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label>Aktif Tema</label>
+                            <div id="current-theme-badge" style="background: var(--neon-blue); color: #000; padding: 10px; border-radius: 8px; font-weight: 800; text-align: center; text-transform: uppercase;">Normal</div>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <small>En Çok Vakit Geçirilen</small>
-                        <h4 id="stat-most-time">-</h4>
-                    </div>
-                    <div class="stat-card">
-                        <small>Ort. Oyun Süresi</small>
-                        <h4 id="stat-avg-time">-</h4>
+                    <div class="card">
+                        <h2>Hızlı Ayarlar</h2>
+                        <div class="form-group">
+                            <label>Öne Çıkan Oyun</label>
+                            <select id="config-featured-quick" onchange="document.getElementById('config-featured').value = this.value; saveConfig();">
+                                <option value="shooting-range-pro">Cyber Range Pro</option>
+                                <option value="block-blast-pro">Block Blast Pro</option>
+                                <option value="tetris-pro">Tetris Pro</option>
+                                <option value="jewels-pro">Jewel Master</option>
+                                <option value="asteroid-pro">Asteroids Pro</option>
+                                <option value="slots-pro">Slots Beach</option>
+                            </select>
+                        </div>
+                        <div class="toggle-row">
+                            <span>Bakım Modu</span>
+                            <label class="switch">
+                                <input type="checkbox" id="config-maintenance-quick" onchange="document.getElementById('config-maintenance').checked = this.checked; saveConfig();">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
-                <div class="table-container">
-                    <table id="analytics-table" style="width: 100%; margin-top: 20px; font-size: 0.8rem; border-collapse: collapse;">
-                        <tr style="border-bottom: 1px solid #333;">
-                            <th style="text-align: left; padding: 10px;">Oyun</th>
-                            <th>Tıklanma</th>
-                            <th>Topl. Süre</th>
-                            <th>Ort. Süre</th>
-                        </tr>
-                        <!-- JS will fill this -->
-                    </table>
-                </div>
-                <button onclick="resetAnalytics()" style="background: #ff000022; color: #ff0000; border: 1px solid #ff0000; margin-top: 15px; font-size: 0.7rem; width: auto; padding: 5px 15px;">Verileri Sıfırla</button>
             </div>
-        </div>
 
-        <div class="save-bar">
-            <button onclick="saveConfig()" style="background: var(--accent); width: 200px;">AYARLARI KAYDET</button>
-        </div>
+            <div id="tab-games" class="tab-content">
+                <div class="card">
+                    <h2>Oyun Erişimi</h2>
+                    <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 0.9rem;">Sitede aktif olacak oyunları buradan açıp kapatabilirsiniz.</p>
+                    <div id="game-toggle-list">
+                        <!-- JS fills this -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-settings" class="tab-content">
+                <div class="grid">
+                    <div class="card">
+                        <h2>Görünüm Ayarları</h2>
+                        <div class="form-group">
+                            <label>Aktif Etkinlik / Tema</label>
+                            <select id="config-event">
+                                <option value="normal">Varsayılan (Normal)</option>
+                                <option value="cyber">Cyberpunk Edition</option>
+                                <option value="retro">Retro Classic</option>
+                                <option value="halloween">Korku Gecesi</option>
+                                <option value="winter">Kış Festivali</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Öne Çıkan Oyun</label>
+                            <select id="config-featured">
+                                <option value="shooting-range-pro">Cyber Range Pro</option>
+                                <option value="block-blast-pro">Block Blast Pro</option>
+                                <option value="tetris-pro">Tetris Pro</option>
+                                <option value="jewels-pro">Jewel Master</option>
+                                <option value="asteroid-pro">Asteroids Pro</option>
+                                <option value="slots-pro">Slots Beach</option>
+                            </select>
+                        </div>
+                        <div class="toggle-row">
+                            <span>Bakım Modu</span>
+                            <label class="switch">
+                                <input type="checkbox" id="config-maintenance">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h2>Duyuru Yönetimi</h2>
+                        <div class="form-group">
+                            <label>Duyuru Metni</label>
+                            <textarea id="config-announcement" rows="3" placeholder="Tüm kullanıcılara gösterilecek mesaj..."></textarea>
+                        </div>
+                        <div class="toggle-row">
+                            <span>Duyuruyu Yayınla</span>
+                            <label class="switch">
+                                <input type="checkbox" id="config-announcement-active">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+                    <button class="primary" onclick="saveConfig()" style="width: 250px;">AYARLARI UYGULA</button>
+                </div>
+            </div>
+
+            <div id="tab-analytics" class="tab-content">
+                <div class="card" style="width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2>Kapsamlı Oyun Analizleri</h2>
+                        <button onclick="resetAnalytics()" style="background: rgba(255, 68, 68, 0.1); color: #ff4444; border: 1px solid #ff4444; font-size: 0.75rem; padding: 8px 15px; border-radius: 8px; cursor: pointer;">Sıfırla</button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="analytics-table">
+                            <thead>
+                                <tr>
+                                    <th>Oyun Adı</th>
+                                    <th>Tıklanma (Hit)</th>
+                                    <th>Popülerlik</th>
+                                    <th>Durum</th>
+                                </tr>
+                            </thead>
+                            <tbody id="full-analytics-body">
+                                <!-- JS fills this -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast">
+        <span style="font-size: 1.2rem;">✅</span>
+        <span id="toast-msg">Ayarlar başarıyla kaydedildi!</span>
     </div>
 
     <script type="module">
-        // FIREBASE CONFIGURATION (LIVE CLOUD)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyB9NUH_4ThZJ1tJlmD0vF6HTMcpBsf3UCA",
             authDomain: "game-d6bf6.firebaseapp.com",
@@ -190,141 +284,168 @@
             measurementId: "G-BLRLYYFYND"
         };
 
-        // Import Firebase SDKs
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        window.login = function() {
+            const pass = document.getElementById('admin-pass').value;
+            if (pass === 'admin123') {
+                document.getElementById('login-area').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('login-area').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'grid';
+                    loadConfig();
+                }, 300);
+            } else {
+                showToast('Hatalı Şifre!');
+            }
+        };
+
+        const gamesList = {
+            'shooting-range-pro': 'Cyber Range Pro',
+            'block-blast-pro': 'Block Blast Pro',
+            'tetris-pro': 'Tetris Pro',
+            'jewels-pro': 'Jewels Master',
+            'asteroid-pro': 'Asteroids Pro',
+            'slots-pro': 'Slots Beach'
+        };
+
         const DEFAULT_CONFIG = {
             event: 'normal',
-            featuredGame: 'space-shooter',
-            coinName: 'Token',
-            coinMultiplier: 1.0,
+            featuredGame: 'shooting-range-pro',
             maintenanceMode: false,
-            leaderboardActive: true,
             disabledGames: [],
             announcementText: '',
             announcementActive: false
         };
 
-        const gamesList = {
-            'slots-pro': 'Slots Beach',
-            'jewels-pro': 'Jewels Master',
-            'tetris-pro': 'Tetris Pro',
-            'asteroid-pro': 'Asteroids Pro'
+        window.showToast = function(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
         };
 
-        // LOGIN FUNCTION
-        window.login = function() {
-            const pass = document.getElementById('admin-pass').value;
-            if (pass === 'admin123') {
-                document.getElementById('login-area').style.display = 'none';
-                document.getElementById('dashboard').style.display = 'block';
-                loadConfigFromCloud();
-            } else {
-                alert('Hatalı Şifre!');
-            }
+        window.switchTab = function(tabId, el) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            el.classList.add('active');
+            document.getElementById('panel-title').innerText = el.innerText;
         };
 
-        // LOAD FROM CLOUD
-        function loadConfigFromCloud() {
+        function loadConfig() {
             const configRef = ref(db, 'admin_config');
             onValue(configRef, (snapshot) => {
                 const config = snapshot.val() || DEFAULT_CONFIG;
                 
-                document.getElementById('current-event-display').innerText = config.event;
-                document.documentElement.className = "theme-" + config.event; // Apply theme to admin too
-                document.getElementById('config-featured').value = config.featuredGame;
-                document.getElementById('config-leaderboard-game').value = config.leaderboardGame || 'space-shooter';
-                document.getElementById('config-leaderboard-active').checked = config.leaderboardActive !== false;
-                document.getElementById('config-coin-name').value = config.coinName;
-                document.getElementById('config-coin-mult').value = config.coinMultiplier;
-                document.getElementById('config-maintenance').checked = config.maintenanceMode || false;
+                const eventVal = config.event || 'normal';
+                document.getElementById('config-event').value = eventVal;
+                document.getElementById('current-event-display').innerText = eventVal;
+                document.getElementById('current-theme-badge').innerText = eventVal;
+                
+                document.getElementById('config-featured').value = config.featuredGame || 'shooting-range-pro';
+                document.getElementById('config-featured-quick').value = config.featuredGame || 'shooting-range-pro';
+                
+                const maintenance = config.maintenanceMode || false;
+                document.getElementById('config-maintenance').checked = maintenance;
+                document.getElementById('config-maintenance-quick').checked = maintenance;
+                
                 document.getElementById('config-announcement').value = config.announcementText || '';
                 document.getElementById('config-announcement-active').checked = config.announcementActive || false;
                 
-                // Game Toggles
                 const toggleList = document.getElementById('game-toggle-list');
                 toggleList.innerHTML = '';
                 Object.keys(gamesList).forEach(id => {
-                    const isActive = !(config.disabledGames || []).includes(id);
-                    toggleList.innerHTML += `
-                        <label style="display: block; margin-bottom: 5px; cursor: pointer;">
-                            <input type="checkbox" class="game-active-check" data-id="${id}" ${isActive ? 'checked' : ''}> ${gamesList[id]}
+                    const isDisabled = (config.disabledGames || []).includes(id);
+                    const div = document.createElement('div');
+                    div.className = 'game-item';
+                    div.innerHTML = `
+                        <span>${gamesList[id]}</span>
+                        <label class="switch">
+                            <input type="checkbox" id="game-${id}" ${!isDisabled ? 'checked' : ''} onchange="saveConfig()">
+                            <span class="slider"></span>
                         </label>
                     `;
+                    toggleList.appendChild(div);
                 });
-            }, { onlyOnce: true });
-            
-            renderAnalytics();
+
+                loadAnalytics();
+            });
         }
 
-        // SAVE TO CLOUD
         window.saveConfig = function() {
-            try {
-                const currentEvent = document.getElementById('current-event-display').innerText;
-                const disabledGames = [];
-                document.querySelectorAll('.game-active-check').forEach(check => {
-                    if (!check.checked) disabledGames.push(check.getAttribute('data-id'));
-                });
-
-                const config = {
-                    event: currentEvent,
-                    featuredGame: document.getElementById('config-featured').value,
-                    leaderboardGame: document.getElementById('config-leaderboard-game').value,
-                    leaderboardActive: document.getElementById('config-leaderboard-active').checked,
-                    coinName: document.getElementById('config-coin-name').value,
-                    coinMultiplier: parseFloat(document.getElementById('config-coin-mult').value),
-                    maintenanceMode: document.getElementById('config-maintenance').checked,
-                    announcementText: document.getElementById('config-announcement').value,
-                    announcementActive: document.getElementById('config-announcement-active').checked,
-                    disabledGames: disabledGames
-                };
-
-                set(ref(db, 'admin_config'), config)
-                .then(() => {
-                    localStorage.setItem('retroArcade_cachedTheme', currentEvent); // Sync local cache too
-                    alert('Sistem Ayarları Buluta Kaydedildi! 🎉 (Tüm cihazlar güncellendi)');
-                })
-                .catch((error) => {
-                    console.error("Firebase Hatası:", error);
-                    alert('Hata: ' + error.message + '\n\nİpucu: Firebase panelinden Rules (Kurallar) sekmesini kontrol et, .read ve .write true olmalı!');
-                });
-            } catch (e) {
-                console.error(e);
-                alert('Beklenmedik bir hata oluştu: ' + e.message);
-            }
-        };
-
-        window.setTheme = function(event) {
-            document.getElementById('current-event-display').innerText = event;
-            document.documentElement.className = "theme-" + event; // Immediate preview in Admin
-        };
-
-        function renderAnalytics() {
-            const savedData = localStorage.getItem('retroArcade_analytics');
-            const analytics = savedData ? JSON.parse(savedData) : { plays: {}, time: {} };
-            const table = document.getElementById('analytics-table');
-            while(table.rows.length > 1) table.deleteRow(1);
-
+            const disabledGames = [];
             Object.keys(gamesList).forEach(id => {
-                const plays = analytics.plays[id] || 0;
-                const time = analytics.time[id] || 0;
-                const avg = plays > 0 ? Math.round(time / plays) : 0;
-                const row = table.insertRow();
-                row.innerHTML = `<td style="text-align: left; padding: 10px;">${gamesList[id]}</td><td>${plays}</td><td>${time} sn</td><td>${avg} sn</td>`;
+                if (!document.getElementById('game-' + id).checked) disabledGames.push(id);
+            });
+
+            const newConfig = {
+                event: document.getElementById('config-event').value,
+                featuredGame: document.getElementById('config-featured').value,
+                maintenanceMode: document.getElementById('config-maintenance').checked,
+                announcementText: document.getElementById('config-announcement').value,
+                announcementActive: document.getElementById('config-announcement-active').checked,
+                disabledGames: disabledGames,
+                lastUpdated: Date.now()
+            };
+
+            set(ref(db, 'admin_config'), newConfig).then(() => {
+                showToast('Sistem ayarları başarıyla güncellendi!');
+            });
+        };
+
+        function loadAnalytics() {
+            const analyticsRef = ref(db, 'analytics');
+            onValue(analyticsRef, (snapshot) => {
+                const data = snapshot.val() || {};
+                let totalClicks = 0;
+                let mostPopular = '-';
+                let maxClicks = -1;
+
+                const tableBody = document.getElementById('full-analytics-body');
+                tableBody.innerHTML = '';
+
+                Object.keys(gamesList).forEach(id => {
+                    const gameData = data[id] || { clicks: 0 };
+                    const clicks = gameData.clicks || 0;
+                    totalClicks += clicks;
+                    
+                    if (clicks > maxClicks) {
+                        maxClicks = clicks;
+                        mostPopular = gamesList[id];
+                    }
+
+                    const popularity = totalClicks > 0 ? ((clicks / totalClicks) * 100).toFixed(1) : 0;
+                    
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="font-weight: 700;">${gamesList[id]}</td>
+                        <td class="trend-up">${clicks.toLocaleString()} Hit</td>
+                        <td>
+                            <div style="width: 100px; height: 6px; background: #222; border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 10px;">
+                                <div style="width: ${popularity}%; height: 100%; background: var(--neon-blue);"></div>
+                            </div>
+                            <span style="font-size: 0.8rem; color: var(--text-dim);">%${popularity}</span>
+                        </td>
+                        <td><span style="color: #39ff14; font-size: 0.7rem;">● ONLINE</span></td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+
+                document.getElementById('dash-total-clicks').innerText = totalClicks;
+                document.getElementById('dash-most-popular').innerText = mostPopular;
             });
         }
 
         window.resetAnalytics = function() {
-            if (confirm('Verileri sıfırlamak istiyor musun?')) {
-                localStorage.removeItem('retroArcade_analytics');
-                renderAnalytics();
+            if (confirm('Tüm analiz verilerini sıfırlamak istediğine emin misin?')) {
+                set(ref(db, 'analytics'), {}).then(() => {
+                    showToast('Analiz verileri temizlendi.');
+                });
             }
         };
+
     </script>
 </body>
 </html>

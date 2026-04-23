@@ -1,6 +1,6 @@
 (function() {
     /**
-     * JEWELS PRO: CANDY EDITION - MOBILE OPTIMIZED
+     * JEWELS PRO: FULL RECOVERY & STABILIZATION
      */
     const canvas = document.getElementById('gameCanvas');
     if (!canvas) return;
@@ -18,18 +18,15 @@
     let lastTime = 0;
     let particles = [];
     let isProcessing = false;
+    let isPaused = false;
 
     const COLORS = [null, '#00f2ff', '#bc13fe', '#ff0077', '#ffff00', '#39ff14', '#ffaa00'];
-    
-    // Assets & Transparency Engine
-    const jewelImages = {};
     const processedJewels = {};
-    let assetsLoaded = 0;
+    const boardBg = new Image(); boardBg.src = 'assets/games/jewels/bg.png';
 
     function loadAsset(id, src) {
         const img = new Image(); img.src = src;
-        img.onload = () => { processedJewels[id] = removeBlack(img); assetsLoaded++; };
-        jewelImages[id] = img;
+        img.onload = () => { processedJewels[id] = removeBlack(img); };
     }
     for (let i = 1; i <= 6; i++) loadAsset(i, `assets/games/jewels/${i}.png`);
 
@@ -41,7 +38,30 @@
         octx.putImageData(data, 0, 0); return off;
     }
 
-    function initGrid() {
+    function saveGameState() {
+        if (gameOver) return;
+        const state = { grid, score, level, scoreGoal, timeLeft, timestamp: Date.now() };
+        localStorage.setItem('retroArcade_save_jewels-pro', JSON.stringify(state));
+    }
+
+    function loadGameState() {
+        const saved = localStorage.getItem('retroArcade_save_jewels-pro');
+        if (saved) {
+            try {
+                const state = JSON.parse(saved);
+                grid = state.grid; score = state.score; level = state.level;
+                scoreGoal = state.scoreGoal; timeLeft = state.timeLeft;
+                return true;
+            } catch(e) { return false; }
+        }
+        return false;
+    }
+
+    function init(forceNew = false) {
+        if (!forceNew && loadGameState()) {
+            gameOver = false; isPaused = false; window.scoreSaved = false;
+            return;
+        }
         grid = [];
         for (let r = 0; r < GRID_SIZE; r++) {
             grid[r] = [];
@@ -52,6 +72,25 @@
                 grid[r][c] = type;
             }
         }
+        score = 0; level = 1; scoreGoal = 1000; timeLeft = 100; gameOver = false; isPaused = false;
+        window.scoreSaved = false;
+        localStorage.removeItem('retroArcade_save_jewels-pro');
+    }
+
+    window.togglePause = function() {
+        if (gameOver) return false;
+        isPaused = !isPaused;
+        return isPaused;
+    };
+
+    function drawCyberPanel(ctx, x, y, w, h, title) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(0, 242, 255, 0.2)'; ctx.strokeRect(x, y, w, h);
+        ctx.fillStyle = 'rgba(0, 242, 255, 0.02)'; ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = 'rgba(0, 242, 255, 0.5)'; ctx.fillRect(x, y, w, 25);
+        ctx.fillStyle = '#000'; ctx.font = '900 12px Inter'; ctx.textAlign = 'center';
+        ctx.fillText(title, x + w/2, y + 17);
+        ctx.restore();
     }
 
     function draw() {
@@ -78,116 +117,124 @@
             ctx.fillStyle = '#fff'; ctx.font = '900 18px Inter';
             ctx.fillText('SEVİYE', offsetX + boardW + panelGap + sideW/2, 210);
             ctx.font = 'bold 40px Inter'; ctx.fillStyle = '#bc13fe'; ctx.fillText(level, offsetX + boardW + panelGap + sideW/2, 260);
-        } else {
-            // MOBILE COMPACT HUD
-            ctx.fillStyle = 'rgba(0, 242, 255, 0.1)'; ctx.fillRect(0, 0, canvas.width, 60);
-            ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = '900 13px Inter';
-            ctx.fillText(`LVL: ${level}`, canvas.width * 0.15, 35);
-            ctx.fillText(`HEDEF: ${scoreGoal}`, canvas.width * 0.4, 35);
-            ctx.fillText(`SKOR: ${score}`, canvas.width * 0.65, 35);
-            ctx.fillStyle = timeLeft < 15 ? '#ff0077' : '#39ff14';
-            ctx.fillText(`SÜRE: ${Math.ceil(timeLeft)}`, canvas.width * 0.88, 35);
         }
+        window.currentGameScore = score;
 
         ctx.strokeStyle = 'rgba(0, 242, 255, 0.4)'; ctx.lineWidth = 4;
         ctx.strokeRect(offsetX - 2, offsetY - 2, boardW + 4, boardH + 4);
-        ctx.fillStyle = 'rgba(0, 242, 255, 0.05)'; ctx.fillRect(offsetX, offsetY, boardW, boardH);
 
+        // Draw Board Background Asset
+        if (boardBg.complete) {
+            ctx.save(); ctx.globalAlpha = 0.5;
+            ctx.drawImage(boardBg, offsetX, offsetY, boardW, boardH);
+            ctx.restore();
+        }
+        
         for (let r = 0; r < GRID_SIZE; r++) {
             for (let c = 0; c < GRID_SIZE; c++) {
                 const type = grid[r][c];
                 if (type) {
                     const x = offsetX + c * CELL_SIZE, y = offsetY + r * CELL_SIZE;
-                    if (selected && selected.r === r && selected.c === c) {
-                        ctx.save();
-                        ctx.shadowBlur = 15; ctx.shadowColor = '#fff';
-                        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'; ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
-                        ctx.restore();
-                    }
-                    if (processedJewels[type]) { 
-                        let bounce = (selected && selected.r === r && selected.c === c) ? Math.sin(Date.now()*0.01)*5 : 0;
-                        ctx.drawImage(processedJewels[type], x + 5, y + 5 + bounce, CELL_SIZE - 10, CELL_SIZE - 10); 
-                    }
-                    else { ctx.fillStyle = COLORS[type]; ctx.beginPath(); ctx.arc(x + CELL_SIZE/2, y + CELL_SIZE/2, CELL_SIZE/3, 0, Math.PI*2); ctx.fill(); }
+                    if (processedJewels[type]) ctx.drawImage(processedJewels[type], x + 5, y + 5, CELL_SIZE - 10, CELL_SIZE - 10);
+                    else { ctx.fillStyle = COLORS[type]; ctx.fillRect(x + 5, y + 5, CELL_SIZE - 10, CELL_SIZE - 10); }
+                    if (selected && selected.r === r && selected.c === c) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.strokeRect(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4); }
                 }
             }
         }
-
-        particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life -= 0.03; ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, p.size, p.size); if (p.life <= 0) particles.splice(i, 1); });
+        
+        particles.forEach((p) => { p.x += p.vx; p.y += p.vy; p.life -= 0.02; ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, p.size, p.size); });
         ctx.globalAlpha = 1;
 
-        if (gameOver) {
-            ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            ctx.fillStyle = '#ff0077'; ctx.font = '900 60px Inter'; ctx.textAlign = 'center';
-            ctx.fillText('OYUN BİTTİ!', canvas.width/2, canvas.height/2);
-            ctx.fillStyle = '#fff'; ctx.font = 'bold 24px Inter'; ctx.fillText(`FİNAL SKOR: ${score}`, canvas.width/2, canvas.height/2 + 60);
+        const lastScore = localStorage.getItem('retroArcade_lastScore_jewels-pro') || 0;
+        const panelW = 140, panelH = 55, pX = canvas.width - panelW - 20, pY = canvas.height - panelH - 20;
+        ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.strokeStyle = '#00f2ff'; ctx.lineWidth = 1; ctx.shadowBlur = 10; ctx.shadowColor = '#00f2ff';
+        ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(pX, pY, panelW, panelH, 8); else ctx.rect(pX, pY, panelW, panelH); ctx.fill(); ctx.stroke();
+        ctx.shadowBlur = 0; ctx.textAlign = 'center'; ctx.fillStyle = '#00f2ff'; ctx.font = '900 10px Inter';
+        ctx.fillText('ÖNCEKİ SKOR', pX + panelW/2, pY + 20); ctx.fillStyle = '#fff'; ctx.font = '900 22px Inter';
+        ctx.fillText(parseInt(lastScore).toLocaleString(), pX + panelW/2, pY + 45); ctx.restore();
+
+        if (isPaused) {
+            ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle = '#fff'; ctx.font = '900 60px Inter'; ctx.textAlign = 'center';
+            ctx.fillText('DURAKLATILDI', canvas.width/2, canvas.height/2);
+            ctx.font = 'bold 20px Inter'; ctx.fillText('DEVAM ETMEK İÇİN DURDUR BUTONUNA BASIN', canvas.width/2, canvas.height/2 + 50);
         }
-    }
 
-    function drawCyberPanel(ctx, x, y, w, h, title) {
-        ctx.save(); ctx.fillStyle = 'rgba(0, 242, 255, 0.03)'; ctx.fillRect(x, y, w, h);
-        ctx.strokeStyle = 'rgba(0, 242, 255, 0.4)'; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, h);
-        ctx.strokeStyle = '#00f2ff'; ctx.lineWidth = 3; const cl = 20;
-        ctx.beginPath(); ctx.moveTo(x, y + cl); ctx.lineTo(x, y); ctx.lineTo(x + cl, y); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(x + w - cl, y + h); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w, y + h - cl); ctx.stroke();
-        ctx.fillStyle = '#00f2ff'; ctx.font = '900 11px Inter'; ctx.textAlign = 'left'; ctx.fillText(title, x + 15, y + 20); ctx.restore();
-    }
-
-    function checkLevelUp() {
-        if (score >= scoreGoal) { level++; scoreGoal += 1000; timeLeft = 100; createLevelUpEffect(); }
-    }
-
-    function createLevelUpEffect() {
-        for(let i=0; i<50; i++) { particles.push({x: canvas.width/2, y: canvas.height/2, vx:(Math.random()-0.5)*20, vy:(Math.random()-0.5)*20, life:1.5, size:Math.random()*6+4, color:'#bc13fe'}); }
+        if (gameOver) {
+            ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ff0077'; ctx.font = 'bold 40px Inter'; ctx.textAlign = 'center';
+            ctx.fillText('ZAMAN DOLDU!', canvas.width/2, canvas.height/2 - 20);
+            ctx.fillStyle = '#fff'; ctx.font = '20px Inter'; ctx.fillText(`Final Skor: ${score}`, canvas.width/2, canvas.height/2 + 30);
+            ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = 'bold 18px Inter';
+            ctx.fillText('YENİDEN BAŞLAMAK İÇİN TIKLAYIN', canvas.width/2, canvas.height/2 + 80);
+        }
     }
 
     function checkMatches() {
-        let matched = false; let toRemove = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(false));
-        for (let r = 0; r < GRID_SIZE; r++) { for (let c = 0; c < GRID_SIZE - 2; c++) { if (grid[r][c] && grid[r][c] === grid[r][c+1] && grid[r][c] === grid[r][c+2]) { toRemove[r][c] = toRemove[r][c+1] = toRemove[r][c+2] = true; matched = true; } } }
-        for (let c = 0; c < GRID_SIZE; c++) { for (let r = 0; r < GRID_SIZE - 2; r++) { if (grid[r][c] && grid[r][c] === grid[r+1][c] && grid[r][c] === grid[r+2][c]) { toRemove[r][c] = toRemove[r+1][c] = toRemove[r+2][c] = true; matched = true; } } }
+        let matched = false; const matchGrid = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(false));
+        for (let r = 0; r < GRID_SIZE; r++) { for (let c = 0; c < GRID_SIZE - 2; c++) { if (grid[r][c] && grid[r][c] === grid[r][c+1] && grid[r][c] === grid[r][c+2]) { matchGrid[r][c] = matchGrid[r][c+1] = matchGrid[r][c+2] = true; matched = true; } } }
+        for (let c = 0; c < GRID_SIZE; c++) { for (let r = 0; r < GRID_SIZE - 2; r++) { if (grid[r][c] && grid[r][c] === grid[r+1][c] && grid[r][c] === grid[r+2][c]) { matchGrid[r][c] = matchGrid[r+1][c] = matchGrid[r+2][c] = true; matched = true; } } }
         if (matched) {
-            for (let r = 0; r < GRID_SIZE; r++) { for (let c = 0; c < GRID_SIZE; c++) { if (toRemove[r][c]) { const x = (canvas.width - GRID_SIZE*CELL_SIZE)/2 + c*CELL_SIZE + CELL_SIZE/2, y = (canvas.height - GRID_SIZE*CELL_SIZE)/2 + r*CELL_SIZE + CELL_SIZE/2; for(let i=0; i<8; i++) particles.push({x, y, vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10, life:1, size:Math.random()*4+2, color:COLORS[grid[r][c]]}); grid[r][c] = 0; score += 10; } } }
-            checkLevelUp(); setTimeout(fillGrid, 300);
-        } else { isProcessing = false; }
-        return matched;
-    }
-
-    function fillGrid() {
-        for (let c = 0; c < GRID_SIZE; c++) { let empty = 0; for (let r = GRID_SIZE - 1; r >= 0; r--) { if (grid[r][c] === 0) empty++; else if (empty > 0) { grid[r + empty][c] = grid[r][c]; grid[r][c] = 0; } } for (let r = 0; r < empty; r++) grid[r][c] = Math.floor(Math.random() * 6) + 1; }
-        setTimeout(checkMatches, 200);
-    }
-
-    function handleInteraction(ex, ey) {
-        if (gameOver || isProcessing) return;
-        const rect = canvas.getBoundingClientRect();
-        const offsetX = (canvas.width - GRID_SIZE * CELL_SIZE) / 2, offsetY = (canvas.height - GRID_SIZE * CELL_SIZE) / 2;
-        const c = Math.floor((ex - rect.left - offsetX) / CELL_SIZE), r = Math.floor((ey - rect.top - offsetY) / CELL_SIZE);
-        if (r < 0 || r >= GRID_SIZE || c < 0 || c >= GRID_SIZE) return;
-        if (!selected) { selected = {r, c}; }
-        else {
-            const dist = Math.abs(selected.r - r) + Math.abs(selected.c - c);
-            if (dist === 1) {
-                isProcessing = true;
-                const r1 = selected.r, c1 = selected.c, r2 = r, c2 = c;
-                const t = grid[r1][c1]; grid[r1][c1] = grid[r2][c2]; grid[r2][c2] = t;
-                setTimeout(() => { if (!checkMatches()) { const t2 = grid[r1][c1]; grid[r1][c1] = grid[r2][c2]; grid[r2][c2] = t2; isProcessing = false; } }, 300);
+            isProcessing = true; let matchCount = 0;
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (matchGrid[r][c]) {
+                        for(let k=0; k<8; k++) particles.push({ x: (canvas.width - GRID_SIZE * CELL_SIZE) / 2 + c*CELL_SIZE + CELL_SIZE/2, y: (canvas.height - GRID_SIZE * CELL_SIZE) / 2 + r*CELL_SIZE + CELL_SIZE/2, vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10, life:1, color: COLORS[grid[r][c]], size: Math.random()*5+2 });
+                        grid[r][c] = null; matchCount++;
+                    }
+                }
             }
-            selected = null;
+            score += matchCount * 10;
+            saveGameState();
+            setTimeout(() => { fillGaps(); }, 300);
+        } else {
+            isProcessing = false;
+            if (score >= scoreGoal) { level++; scoreGoal += 500; timeLeft = 100; saveGameState(); }
         }
     }
 
-    canvas.addEventListener('mousedown', e => handleInteraction(e.clientX, e.clientY));
-    canvas.addEventListener('touchstart', e => { e.preventDefault(); handleInteraction(e.touches[0].clientX, e.touches[0].clientY); }, {passive: false});
+    function fillGaps() {
+        for (let c = 0; c < GRID_SIZE; c++) {
+            let emptySpaces = 0;
+            for (let r = GRID_SIZE - 1; r >= 0; r--) { if (grid[r][c] === null) emptySpaces++; else if (emptySpaces > 0) { grid[r + emptySpaces][c] = grid[r][c]; grid[r][c] = null; } }
+            for (let i = 0; i < emptySpaces; i++) grid[i][c] = Math.floor(Math.random() * 6) + 1;
+        }
+        checkMatches();
+    }
 
-    function update(t) {
-        if (!window.gameStarted) { lastTime = t; requestAnimationFrame(update); return; }
-        const dt = (t - lastTime) / 1000; lastTime = t;
-        if (!gameOver) { timeLeft -= dt; if (timeLeft <= 0) { timeLeft = 0; gameOver = true; endGame(); } }
+    function handleInteraction(e) {
+        if (gameOver || isProcessing || isPaused) return;
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX, clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const x = clientX - rect.left, y = clientY - rect.top;
+        const boardW = GRID_SIZE * CELL_SIZE, boardH = GRID_SIZE * CELL_SIZE;
+        const offsetX = (canvas.width - boardW) / 2, offsetY = (canvas.height - boardH) / 2;
+        const c = Math.floor((x - offsetX) / CELL_SIZE), r = Math.floor((y - offsetY) / CELL_SIZE);
+        if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
+            if (!selected) selected = { r, c };
+            else { if (Math.abs(selected.r - r) + Math.abs(selected.c - c) === 1) { const temp = grid[r][c]; grid[r][c] = grid[selected.r][selected.c]; grid[selected.r][selected.c] = temp; selected = null; checkMatches(); } else selected = { r, c }; }
+        }
+    }
+
+    let saveTimer = 0;
+    function update(time) {
+        const dt = (time - lastTime) / 1000; lastTime = time;
+        if (!isPaused && window.gameStarted && !gameOver) {
+            timeLeft -= dt;
+            saveTimer += dt;
+            if (saveTimer > 2) { saveGameState(); saveTimer = 0; } // Save every 2 seconds
+            if (timeLeft <= 0) { 
+                timeLeft = 0; gameOver = true; 
+                localStorage.removeItem('retroArcade_save_jewels-pro');
+                if (window.saveUserScore) window.saveUserScore(score); 
+            }
+        }
         draw(); requestAnimationFrame(update);
     }
-    function endGame() { setTimeout(() => { const o = document.getElementById('play-overlay'); if (o) o.style.display = 'flex'; }, 2000); }
 
-    initGrid(); window.addEventListener('resize', () => { canvas.width = canvas.parentElement.offsetWidth; canvas.height = canvas.parentElement.offsetHeight; });
-    canvas.width = canvas.parentElement.offsetWidth; canvas.height = canvas.parentElement.offsetHeight;
+    canvas.addEventListener('mousedown', e => { if (gameOver) { init(true); return; } handleInteraction(e); });
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); if (gameOver) { init(true); return; } handleInteraction(e); });
+
+    init();
     requestAnimationFrame(update);
 })();

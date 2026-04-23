@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="js/translations.js"></script>
     <style>
-        html, body { background: #000 !important; overflow: hidden !important; }
+        html { background: #000; } body { background: transparent; overflow: hidden !important; }
         .container.game-container { max-width: none !important; width: 98% !important; padding: 0 !important; margin: 0 auto !important; }
         .game-viewport { max-width: none !important; width: 100% !important; aspect-ratio: auto !important; height: 85vh !important; position: relative; background: #000; }
         #play-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); transition: 0.5s; }
@@ -60,6 +60,7 @@
 
         <div class="game-viewport">
             <div id="game-canvas-container" style="width: 100%; height: 100%;"></div>
+        
             
             <!-- START OVERLAY -->
             <div id="play-overlay">
@@ -104,10 +105,12 @@
             </script>
 
             <button id="pause-game-btn" class="pause-btn" data-i18n="paused">DURDUR</button>
+
         </div>
 
         <div style="display: flex; justify-content: flex-end; margin-top: 15px; gap: 10px;">
-            <button onclick="location.reload()" class="primary-btn" style="padding: 8px 15px; font-size: 0.8rem;" data-i18n="restart">🔄 Yeniden Başlat</button>
+            <button id="pause-game-btn" class="pause-btn" style="display:none; padding: 8px 15px; font-size: 0.8rem; background: var(--neon-pink); color: #fff; border: none; border-radius: 8px; font-weight: 900; cursor: pointer;">⏸️ DURDUR</button>
+            <button onclick="if(window.saveUserScore) window.saveUserScore(window.currentGameScore || 0); location.reload();" class="primary-btn" style="padding: 8px 15px; font-size: 0.8rem;" data-i18n="restart">🔄 Yeniden Başlat</button>
         </div>
 
         <div class="game-info-grid">
@@ -125,6 +128,7 @@
             </div>
         </div>
     </div>
+    <script src="js/bg-particles.js"></script>
     <script type="module" src="js/game-loader.js" defer></script>
 </body>
 </html>

@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <script src="js/translations.js"></script>
-    <style>html, body { background: #000 !important; overflow: hidden !important; }</style>
+    <style>html { background: #000; } body { background: transparent; overflow: hidden !important; }</style>
     <!-- THEME BOOTSTRAPPER (Prevents Flickering) -->
     <script>
         const cachedTheme = localStorage.getItem('retroArcade_cachedTheme');
@@ -168,25 +168,25 @@
             </div>
             <div class="market-grid">
                 <!-- Item 1 -->
-                <div class="market-item" data-price="500" data-id="avatar-bot">
-                    <div class="item-icon">🤖</div>
-                    <h4>Cyber Bot</h4>
-                    <p>Profiline fütüristik bir hava kat.</p>
-                    <button class="buy-btn">500 🪙</button>
+                <div class="market-item" data-price="500" data-id="score-booster">
+                    <div class="item-icon">🚀</div>
+                    <h4>Score X2 Booster</h4>
+                    <p>Tüm oyunlarda 2 kat daha fazla puan kazan.</p>
+                    <button class="buy-btn" onclick="buyItem('score-booster', 500)">500 🪙</button>
                 </div>
                 <!-- Item 2 -->
-                <div class="market-item" data-price="1000" data-id="theme-pink">
+                <div class="market-item" data-price="900" data-id="theme-pink">
                     <div class="item-icon">🌸</div>
                     <h4>Neon Pink</h4>
                     <p>Arayüzü pembeye çevir.</p>
-                    <button class="buy-btn">1000 🪙</button>
+                    <button class="buy-btn" onclick="buyItem('theme-pink', 900)">900 🪙</button>
                 </div>
                 <!-- Item 3 -->
                 <div class="market-item" data-price="300" data-id="xp-booster">
                     <div class="item-icon">⚡</div>
                     <h4>XP İksiri</h4>
                     <p>Hızlı seviye atlamak için kullan.</p>
-                    <button class="buy-btn">300 🪙</button>
+                    <button class="buy-btn" onclick="buyItem('xp-booster', 300)">300 🪙</button>
                 </div>
             </div>
         </section>
@@ -245,6 +245,7 @@
     </div>
 
     <!-- Firebase & Core Logic (DEFERRED FOR SPEED) -->
+    <script src="js/bg-particles.js"></script>
     <script type="module" src="js/game-loader.js" defer></script>
 </body>
 
