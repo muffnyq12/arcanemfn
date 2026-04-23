@@ -1,6 +1,6 @@
 (function() {
     /**
-     * TETRIS PRO: NEON ULTIMATE - MOBILE TOUCH CONSOLE EDITION
+     * TETRIS PRO: NEON ULTIMATE - GESTURE & TOUCH CONSOLE
      */
     const canvas = document.getElementById('gameCanvas');
     if (!canvas) return;
@@ -15,9 +15,6 @@
     let gameOver = false; let nextPiece; let holdPiece = null;
     let canHold = true; let dropCounter = 0; let dropInterval = 1000;
     let lastTime = 0; let shake = 0;
-
-    let bgParticles = [];
-    for(let i=0; i<50; i++) bgParticles.push({ x: Math.random() * 2000, y: Math.random() * 2000, s: Math.random() * 2 + 1, v: Math.random() * 0.4 + 0.1 });
 
     const COLORS = [null, '#00f2ff', '#0077ff', '#ffaa00', '#ffff00', '#39ff14', '#bc13fe', '#ff0077'];
     const SHAPES = [null, 
@@ -40,7 +37,7 @@
             const isMobile = window.innerWidth < 768;
             if (isMobile) {
                 BLOCK_SIZE = Math.floor((canvas.width * 0.90) / COLS);
-                if (BLOCK_SIZE * ROWS > canvas.height * 0.70) BLOCK_SIZE = Math.floor((canvas.height * 0.70) / ROWS);
+                if (BLOCK_SIZE * ROWS > canvas.height * 0.60) BLOCK_SIZE = Math.floor((canvas.height * 0.60) / ROWS);
             } else BLOCK_SIZE = Math.floor((canvas.height * 0.98) / ROWS);
         }
     }
@@ -119,7 +116,6 @@
         ctx.save();
         if (shake > 0) { ctx.translate(Math.random()*shake-shake/2, Math.random()*shake-shake/2); shake *= 0.9; }
         ctx.fillStyle = '#010103'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        bgParticles.forEach(p => { ctx.fillStyle = 'rgba(0, 242, 255, 0.2)'; ctx.fillRect(p.x % canvas.width, p.y % canvas.height, p.s, p.s); p.y += p.v; });
 
         const isMobile = canvas.width < 768;
         const boardW = COLS * BLOCK_SIZE; const boardH = ROWS * BLOCK_SIZE;
@@ -190,6 +186,33 @@
         else if (e.keyCode === 32) playerHardDrop(); else if (e.keyCode === 16 || e.keyCode === 67) playerHold();
     });
 
+    // NEW GESTURE SYSTEM
+    let touchStartX = 0; let touchStartY = 0; let touchStartTime = 0;
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY;
+        touchStartTime = Date.now();
+    }, {passive: false});
+
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (gameOver) return;
+        const touchX = e.touches[0].clientX; const diffX = touchX - touchStartX;
+        if (Math.abs(diffX) > BLOCK_SIZE * 0.8) {
+            playerMove(diffX > 0 ? 1 : -1);
+            touchStartX = touchX; // Update to allow continuous slide
+        }
+    }, {passive: false});
+
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        if (gameOver) return;
+        const duration = Date.now() - touchStartTime;
+        const touchX = e.changedTouches[0].clientX; const touchY = e.changedTouches[0].clientY;
+        const dist = Math.hypot(touchX - touchStartX, touchY - touchStartY);
+        if (duration < 200 && dist < 20) playerHardDrop(); // Fast Tap = Hard Drop
+    }, {passive: false});
+
     function setupMobileControls() {
         if (window.innerWidth > 768) return;
         const container = document.getElementById('game-canvas-container');
@@ -197,29 +220,25 @@
 
         const ui = document.createElement('div');
         ui.id = 'tetris-mobile-ui';
-        ui.style = "position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:8px;pointer-events:auto;z-index:100;padding:10px;";
+        ui.style = "position:absolute;bottom:25px;left:0;right:0;display:flex;justify-content:center;gap:15px;pointer-events:none;z-index:9999;";
         
-        const btnStyle = "width:55px;height:55px;background:rgba(0,242,255,0.05);border:2px solid #00f2ff;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:bold;user-select:none;touch-action:manipulation;box-shadow:0 0 10px #00f2ff;pointer-events:auto;";
-        const specStyle = btnStyle + "border-color:#ff0077;box-shadow:0 0 10px #ff0077;width:65px;height:65px;";
+        const btnStyle = "width:60px;height:60px;background:rgba(0,242,255,0.25);border:2px solid #00f2ff;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:bold;user-select:none;touch-action:manipulation;box-shadow:0 0 15px #00f2ff;pointer-events:auto;";
+        const specStyle = btnStyle + "border-color:#ff0077;box-shadow:0 0 15px #ff0077;width:70px;height:70px;";
 
         const controls = [
-            { l: '←', a: () => playerMove(-1) },
             { l: '↻', a: () => playerRotate(1) },
-            { l: '→', a: () => playerMove(1) },
             { l: '↓', a: () => playerDrop() },
-            { l: '⤓', a: () => playerHardDrop(), s: true },
             { l: 'H', a: () => playerHold(), s: true }
         ];
 
         controls.forEach(b => {
             const btn = document.createElement('div');
-            btn.innerHTML = b.l;
-            btn.style = b.s ? specStyle : btnStyle;
+            btn.innerHTML = b.l; btn.style = b.s ? specStyle : btnStyle;
             const trigger = (e) => { e.preventDefault(); if(!gameOver) b.a(); };
-            btn.ontouchstart = trigger;
+            btn.addEventListener('touchstart', trigger, {passive: false});
+            btn.addEventListener('mousedown', trigger);
             ui.appendChild(btn);
         });
-
         container.appendChild(ui);
     }
 

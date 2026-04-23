@@ -1,6 +1,6 @@
 (function() {
     /**
-     * ASTEROIDS PRO: NEON STRIKE - MOBILE CONTROL EDITION
+     * ASTEROIDS PRO: NEON STRIKE - ROBUST PC & MOBILE CONTROLS
      */
     const canvas = document.getElementById('gameCanvas');
     if (!canvas) return;
@@ -42,13 +42,13 @@
 
         const ui = document.createElement('div');
         ui.id = 'mobile-asteroid-ui';
-        ui.style = "position:absolute;bottom:20px;left:0;right:0;height:120px;display:flex;justify-content:space-between;padding:0 30px;pointer-events:none;z-index:1000;";
+        ui.style = "position:absolute;bottom:30px;left:0;right:0;height:120px;display:flex;justify-content:space-between;padding:0 30px;pointer-events:none;z-index:9999;";
         
-        const btnStyle = "width:70px;height:70px;background:rgba(0,242,255,0.1);border:2px solid var(--neon-blue);border-radius:50%;color:white;display:flex;align-items:center;justify-content:center;font-size:1.5rem;pointer-events:auto;user-select:none;touch-action:manipulation;box-shadow:0 0 15px var(--neon-blue);";
-        const fireStyle = btnStyle + "border-color:var(--neon-pink);box-shadow:0 0 15px var(--neon-pink);width:90px;height:90px;";
+        const btnStyle = "width:75px;height:75px;background:rgba(0,242,255,0.25);border:2px solid var(--neon-blue);border-radius:50%;color:white;display:flex;align-items:center;justify-content:center;font-size:1.6rem;pointer-events:auto;user-select:none;touch-action:manipulation;box-shadow:0 0 15px rgba(0,242,255,0.5);";
+        const fireStyle = btnStyle + "border-color:var(--neon-pink);box-shadow:0 0 15px rgba(255,0,119,0.5);width:95px;height:95px;";
 
-        const leftGroup = document.createElement('div'); leftGroup.style = "display:flex;gap:20px;align-items:center;";
-        const rightGroup = document.createElement('div'); rightGroup.style = "display:flex;gap:20px;align-items:center;";
+        const leftGroup = document.createElement('div'); leftGroup.style = "display:flex;gap:25px;align-items:center;";
+        const rightGroup = document.createElement('div'); rightGroup.style = "display:flex;gap:25px;align-items:center;";
 
         const btnL = document.createElement('div'); btnL.innerHTML = "←"; btnL.style = btnStyle;
         const btnR = document.createElement('div'); btnR.innerHTML = "→"; btnR.style = btnStyle;
@@ -56,12 +56,21 @@
         const btnF = document.createElement('div'); btnF.innerHTML = "🔥"; btnF.style = fireStyle;
 
         const bind = (el, key, val) => {
-            el.ontouchstart = (e) => { e.preventDefault(); mobileKeys[key] = val; if(key==='fire') fire(); };
-            el.ontouchend = (e) => { e.preventDefault(); mobileKeys[key] = false; };
+            const start = (e) => { e.preventDefault(); e.stopPropagation(); mobileKeys[key] = val; if(key==='fire') fire(); };
+            const end = (e) => { e.preventDefault(); e.stopPropagation(); mobileKeys[key] = false; };
+            el.addEventListener('touchstart', start, {passive: false});
+            el.addEventListener('touchend', end, {passive: false});
+            el.addEventListener('mousedown', start);
+            el.addEventListener('mouseup', end);
+            el.addEventListener('mouseleave', end);
         };
 
-        bind(btnL, 'left', true); bind(btnR, 'right', true); bind(btnT, 'thrust', true);
-        btnF.ontouchstart = (e) => { e.preventDefault(); fire(); };
+        bind(btnL, 'left', true); 
+        bind(btnR, 'right', true); 
+        bind(btnT, 'thrust', true); // FIXED SYNTAX ERROR HERE
+        
+        btnF.addEventListener('touchstart', (e) => { e.preventDefault(); fire(); }, {passive: false});
+        btnF.addEventListener('mousedown', (e) => { e.preventDefault(); fire(); });
 
         leftGroup.appendChild(btnL); leftGroup.appendChild(btnR);
         rightGroup.appendChild(btnT); rightGroup.appendChild(btnF);
@@ -79,18 +88,15 @@
         ctx.fillStyle = '#010103'; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         if (!gameOver) {
-            // MOVEMENT
             if (keys[37] || mobileKeys.left) ship.a -= 0.1;
             if (keys[39] || mobileKeys.right) ship.a += 0.1;
             ship.thrusting = keys[38] || mobileKeys.thrust;
-            if (ship.thrusting) { ship.thrust.x += Math.cos(ship.a) * 0.1; ship.thrust.y += Math.sin(ship.a) * 0.1; }
+            if (ship.thrusting) { ship.thrust.x += Math.cos(ship.a) * 0.15; ship.thrust.y += Math.sin(ship.a) * 0.15; }
             else { ship.thrust.x *= 0.99; ship.thrust.y *= 0.99; }
-
             ship.x += ship.thrust.x; ship.y += ship.thrust.y;
             if (ship.x < 0) ship.x = canvas.width; if (ship.x > canvas.width) ship.x = 0;
             if (ship.y < 0) ship.y = canvas.height; if (ship.y > canvas.height) ship.y = 0;
 
-            // DRAW SHIP
             ctx.strokeStyle = ship.thrusting ? '#ff0077' : '#00f2ff'; ctx.lineWidth = 2; ctx.beginPath();
             ctx.moveTo(ship.x + Math.cos(ship.a) * ship.r, ship.y + Math.sin(ship.a) * ship.r);
             ctx.lineTo(ship.x + Math.cos(ship.a + 2.5) * ship.r, ship.y + Math.sin(ship.a + 2.5) * ship.r);
@@ -98,7 +104,6 @@
             ctx.closePath(); ctx.stroke();
         }
 
-        // BULLETS
         for (let i = bullets.length - 1; i >= 0; i--) {
             let b = bullets[i]; b.x += b.v.x; b.y += b.v.y; b.life--;
             if (b.x < 0) b.x = canvas.width; if (b.x > canvas.width) b.x = 0;
@@ -107,20 +112,16 @@
             if (b.life <= 0) bullets.splice(i, 1);
         }
 
-        // ASTEROIDS
         for (let i = asteroids.length - 1; i >= 0; i--) {
             let a = asteroids[i]; a.x += a.v.x; a.y += a.v.y;
             if (a.x < 0) a.x = canvas.width; if (a.x > canvas.width) a.x = 0;
             if (a.y < 0) a.y = canvas.height; if (a.y > canvas.height) a.y = 0;
-            
             ctx.strokeStyle = '#bc13fe'; ctx.beginPath();
             for (let j = 0; j < 10; j++) {
                 let ang = (j / 10) * Math.PI * 2;
                 ctx.lineTo(a.x + Math.cos(ang) * a.r * a.offs[j], a.y + Math.sin(ang) * a.r * a.offs[j]);
             }
             ctx.closePath(); ctx.stroke();
-
-            // Collision
             if (!gameOver) {
                 let d = Math.hypot(ship.x - a.x, ship.y - a.y);
                 if (d < ship.r + a.r) { gameOver = true; createExplosion(ship.x, ship.y, '#00f2ff'); setTimeout(reset, 2000); }
@@ -135,21 +136,22 @@
             }
         }
 
-        // PARTICLES
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i]; p.x += p.v.x; p.y += p.v.y; p.life -= 0.02;
             ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, 2, 2); ctx.globalAlpha = 1;
             if (p.life <= 0) particles.splice(i, 1);
         }
 
-        // HUD
         ctx.fillStyle = '#fff'; ctx.font = '20px Inter'; ctx.textAlign = 'left'; ctx.fillText(`SKOR: ${score}`, 20, 40);
         if (gameOver) { ctx.textAlign = 'center'; ctx.font = '40px Inter'; ctx.fillText('GAMEOVER', canvas.width / 2, canvas.height / 2); }
-
         requestAnimationFrame(update);
     }
 
-    window.addEventListener('keydown', e => { keys[e.keyCode] = true; if(e.keyCode == 32) fire(); });
+    window.addEventListener('keydown', e => { 
+        if([37,38,39,40,32].includes(e.keyCode)) e.preventDefault();
+        keys[e.keyCode] = true; 
+        if(e.keyCode == 32) fire(); 
+    });
     window.addEventListener('keyup', e => keys[e.keyCode] = false);
 
     reset(); setupMobileControls(); requestAnimationFrame(update);
