@@ -10,7 +10,10 @@
     <style>
         html, body { background: #000 !important; overflow: hidden !important; }
         .container.game-container { max-width: none !important; width: 98% !important; padding: 0 !important; margin: 0 auto !important; }
-        .game-viewport { max-width: none !important; width: 100% !important; aspect-ratio: auto !important; height: 85vh !important; position: relative; }
+        .game-viewport { max-width: none !important; width: 100% !important; aspect-ratio: auto !important; height: 85vh !important; position: relative; background: #000; }
+        #play-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); transition: 0.5s; }
+        .start-btn { padding: 20px 60px; font-size: 1.5rem; font-weight: 900; color: #fff; background: var(--neon-blue); border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 0 20px var(--neon-blue); transition: 0.3s; letter-spacing: 2px; }
+        .start-btn:hover { transform: scale(1.1); box-shadow: 0 0 40px var(--neon-blue); }
     </style>
     <script>
         const cachedTheme = localStorage.getItem('retroArcade_cachedTheme');
@@ -57,6 +60,13 @@
 
         <div class="game-viewport">
             <div id="game-canvas-container" style="width: 100%; height: 100%;"></div>
+            
+            <!-- START OVERLAY -->
+            <div id="play-overlay">
+                <div class="logo-big pulse" style="font-size: 2.5rem; margin-bottom: 30px;">RETRO ARCADE</div>
+                <button id="start-game-btn" class="start-btn">OYUNA BAŞLA</button>
+                <p style="color: var(--text-dim); margin-top: 20px; font-size: 0.8rem;">Hazır olduğunda butona tıkla!</p>
+            </div>
             
             <!-- Rotate Device Overlay (ONLY FOR LANDSCAPE GAMES) -->
             <div id="rotate-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 99999; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #fff; pointer-events: auto;">

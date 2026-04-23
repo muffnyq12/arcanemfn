@@ -12,7 +12,7 @@ const firebaseConfig = {
 
 // Import Firebase SDKs (CDN)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -129,6 +129,14 @@ const gamesData = {
         file: 'js/games/asteroid-pro.js', 
         desc: 'Derin uzayın karanlığında neon ışıkları altında amansız bir mücadele. Parçala, yok et ve liderlik tablosuna adını yazdır!', 
         tag: 'PRO ARCADE' 
+    },
+    'block-blast-pro': { 
+        title: 'Block Blast: Cyber Blast', 
+        subtitle: 'Cyber Grid Puzzle Challenge', 
+        instructions: '<ul><li><b>Sürükle & Bırak:</b> Alttaki 3 şekilden birini seç ve 8x8 tahtaya yerleştir.</li><li><b>Patlat:</b> Tamamladığın satır veya sütunlar anında patlar.</li><li><b>Görev:</b> Tahta dolmadan en yüksek puanı topla, blokları akıllıca yerleştir!</li></ul>', 
+        file: 'js/games/block-blast-pro.js', 
+        desc: 'Strateji ve hızın buluştuğu siber bir bulmaca. Blokları yerleştir, ekranı sarsan patlamalar yarat ve rekorları kır. Gravity yok, sadece saf strateji!', 
+        tag: 'CYBER PUZZLE' 
     }
 };
 
