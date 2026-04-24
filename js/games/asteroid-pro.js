@@ -232,7 +232,9 @@
     }
 
     function injectMobileControls() {
-        if (window.innerWidth > 1024) {
+        const isTouch = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+        const isSmall = window.innerWidth <= 1400;
+        if (!isTouch && !isSmall) {
             const old = document.getElementById('asteroid-mobile-ctrl');
             if (old) old.remove();
             return;

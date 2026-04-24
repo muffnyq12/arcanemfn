@@ -722,14 +722,16 @@ nav {
     height: 80px;
 }
 
-@media (max-width: 1024px) {
-    /* Mobile Specific Controls    function drawMobileControls() {
-        if (window.innerWidth >= 1025) return; // Tablets are up to 1024px
-    position: absolute;
-    bottom: 20px;
-    left: 0;
-    right: 0;
-    padding: 0 20px; */
+@media (max-width: 1400px) {
+    /* Mobile Specific Controls    function injectMobileControls() {
+        const isTouch = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+        const isSmall = window.innerWidth <= 1400;
+        if (!isTouch && !isSmall) {
+            const old = document.getElementById('asteroid-mobile-ctrl');
+            if (old) old.remove();
+            return;
+        }
+padding: 0 20px; */
     .hero h1 { font-size: 2.5rem; }
     .hero p { font-size: 1.1rem; }
     .game-details { grid-template-columns: 1fr; }
@@ -1246,7 +1248,8 @@ nav {
     }
 
     .info-panel h3 {
-        const isMobile = window.innerWidth <= 1024;
+        const isTouch = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+        const isMobile = window.innerWidth <= 1400 || isTouch;
         font-size: 1rem !important;
         margin-bottom: 0.8rem !important;
     }
@@ -1459,7 +1462,7 @@ nav {
 /* ============================================================
    MOBILE OPTIMIZATION PASS (PREMIUM MOBILE UX)
    ============================================================ */
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
     :root { --container-pad: 15px; }
     .container { padding: 0 var(--container-pad); }
     
