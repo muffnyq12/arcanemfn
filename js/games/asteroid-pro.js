@@ -20,7 +20,7 @@
     let bgOffset = { x: 0, y: 0 };
     
     const VICTORY_SCORE = 20000;
-    let mobileInput = { left: false, right: false, thrust: false, fire: false, active: false, startX: 0, startY: 0, currX: 0, currY: 0 };
+    let mobileInput = { active: false, angle: 0, thrust: false, fire: false };
 
     const shipImg = new Image(); shipImg.src = 'assets/games/asteroid/ship.png';
     const astImg = new Image(); astImg.src = 'assets/games/asteroid/asteroid.png';
@@ -102,9 +102,16 @@
         if (shake > 0) { ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake); shake *= 0.9; }
         
         if (!gameOver && !victory && !isPaused) {
-            if (keys[37] || mobileInput.left) ship.a -= 0.1;
-            if (keys[39] || mobileInput.right) ship.a += 0.1;
-            ship.thrusting = keys[38] || mobileInput.thrust;
+            if (keys[37]) ship.a -= 0.1;
+            if (keys[39]) ship.a += 0.1;
+            
+            if (mobileInput.active) {
+                ship.a = mobileInput.angle;
+                ship.thrusting = mobileInput.thrust;
+            } else {
+                ship.thrusting = keys[38];
+            }
+
             if (ship.thrusting) { 
                 ship.thrust.x += Math.cos(ship.a) * 0.25; ship.thrust.y += Math.sin(ship.a) * 0.25; 
                 if (Math.random() > 0.4) particles.push({ x: ship.x - Math.cos(ship.a)*ship.r, y: ship.y - Math.sin(ship.a)*ship.r, vx: -Math.cos(ship.a)*2, vy: -Math.sin(ship.a)*2, life: 0.5, color: '#ff0077', size: 2 });
@@ -284,15 +291,20 @@
             if (dist > maxDist) { dx *= maxDist / dist; dy *= maxDist / dist; }
             handle.style.transform = `translate(${dx}px, ${dy}px)`;
 
-            mobileInput.left = dx < -25;
-            mobileInput.right = dx > 25;
-            mobileInput.thrust = dy < -25;
+            if (dist > 15) {
+                mobileInput.active = true;
+                mobileInput.angle = Math.atan2(dy, dx);
+                mobileInput.thrust = dist > 35;
+            } else {
+                mobileInput.active = false;
+                mobileInput.thrust = false;
+            }
         };
 
         const resetJoystick = (e) => {
             if (e) e.preventDefault();
             handle.style.transform = 'translate(0, 0)';
-            mobileInput.left = false; mobileInput.right = false; mobileInput.thrust = false;
+            mobileInput.active = false; mobileInput.thrust = false;
         };
 
         base.addEventListener('touchstart', updateJoystick, {passive:false});
