@@ -20,7 +20,7 @@
     let bgOffset = { x: 0, y: 0 };
     
     const VICTORY_SCORE = 20000;
-    let mobileInput = { left: false, right: false, thrust: false, fire: false };
+    let mobileInput = { left: false, right: false, thrust: false, fire: false, active: false, startX: 0, startY: 0, currX: 0, currY: 0 };
 
     const shipImg = new Image(); shipImg.src = 'assets/games/asteroid/ship.png';
     const astImg = new Image(); astImg.src = 'assets/games/asteroid/asteroid.png';
@@ -226,8 +226,28 @@
             ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = 'bold 18px Inter';
             ctx.fillText('YENİDEN BAŞLAMAK İÇİN TIKLAYIN', canvas.width/2, canvas.height/2 + 60);
         }
+        drawMobileControls();
         ctx.restore();
         requestAnimationFrame(update);
+    }
+
+    function drawMobileControls() {
+        if (window.innerWidth >= 768) return; // Use innerWidth for reliable mobile check
+
+        // Joystick (Left)
+        const jX = 100, jY = canvas.height - 100, jR = 60;
+        ctx.save(); ctx.globalAlpha = 0.5; // Increased visibility
+        ctx.beginPath(); ctx.arc(jX, jY, jR, 0, Math.PI*2); ctx.strokeStyle = '#00f2ff'; ctx.lineWidth = 2; ctx.stroke();
+        if (mobileInput.active) {
+            ctx.beginPath(); ctx.arc(mobileInput.currX, mobileInput.currY, 20, 0, Math.PI*2); ctx.fillStyle = '#00f2ff'; ctx.fill();
+        }
+        
+        // Fire Button (Right)
+        const fX = canvas.width - 100, fY = canvas.height - 100, fR = 50;
+        ctx.beginPath(); ctx.arc(fX, fY, fR, 0, Math.PI*2); ctx.strokeStyle = '#ff0077'; ctx.lineWidth = 4; ctx.stroke();
+        ctx.fillStyle = mobileInput.fire ? '#ff0077' : 'transparent'; ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.font = '900 12px Inter'; ctx.textAlign = 'center'; ctx.fillText('FIRE', fX, fY + 5);
+        ctx.restore();
     }
 
     function die() { 
@@ -252,10 +272,52 @@
         if (e.keyCode === 32) shoot(); 
     });
     window.addEventListener('keyup', e => { keys[e.keyCode] = false; });
-    
-    canvas.addEventListener('mousedown', e => {
+
+    canvas.addEventListener('mousedown', () => { if (gameOver || victory) init(); });
+
+    canvas.addEventListener('touchstart', e => {
+        e.preventDefault();
         if (gameOver || victory) { init(); return; }
-        shoot();
+        const rect = canvas.getBoundingClientRect();
+        for (let t of e.touches) {
+            const tx = t.clientX - rect.left, ty = t.clientY - rect.top;
+            if (tx < canvas.width / 2) {
+                mobileInput.active = true; mobileInput.startX = tx; mobileInput.startY = ty;
+                mobileInput.currX = tx; mobileInput.currY = ty;
+            } else {
+                const fX = canvas.width - 80, fY = canvas.height - 80, fR = 60;
+                if (dist(tx, ty, fX, fY) < fR) { mobileInput.fire = true; shoot(); }
+            }
+        }
+    }, {passive: false});
+
+    canvas.addEventListener('touchmove', e => {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        for (let t of e.touches) {
+            const tx = t.clientX - rect.left, ty = t.clientY - rect.top;
+            if (mobileInput.active && tx < canvas.width / 2) {
+                mobileInput.currX = tx; mobileInput.currY = ty;
+                const dx = tx - mobileInput.startX, dy = ty - mobileInput.startY;
+                mobileInput.left = dx < -20;
+                mobileInput.right = dx > 20;
+                mobileInput.thrust = dy < -20;
+            }
+        }
+    }, {passive: false});
+
+    canvas.addEventListener('touchend', e => {
+        if (e.touches.length === 0) {
+            mobileInput.active = false; mobileInput.left = false; mobileInput.right = false; mobileInput.thrust = false; mobileInput.fire = false;
+        } else {
+            let joystickRemaining = false;
+            for (let t of e.touches) {
+                const rect = canvas.getBoundingClientRect();
+                if (t.clientX - rect.left < canvas.width/2) joystickRemaining = true;
+            }
+            if (!joystickRemaining) { mobileInput.active = false; mobileInput.left = false; mobileInput.right = false; mobileInput.thrust = false; }
+            mobileInput.fire = false;
+        }
     });
 
     init();

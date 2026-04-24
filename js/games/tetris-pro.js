@@ -165,7 +165,29 @@
             ctx.fillStyle = p.color; ctx.globalAlpha = p.life;
             ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
         });
+
+        drawMobileControls();
         ctx.globalAlpha = 1.0;
+    }
+
+    function drawMobileControls() {
+        if (window.innerWidth >= 768) return;
+        const btnW = 60, btnH = 60, gap = 15;
+        const startX = (canvas.width - (btnW * 4 + gap * 3)) / 2;
+        const y = canvas.height - 100;
+
+        const drawBtn = (x, label, color) => {
+            ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.strokeStyle = color; ctx.lineWidth = 2;
+            ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, btnW, btnH, 8); else ctx.rect(x, y, btnW, btnH);
+            ctx.fill(); ctx.stroke();
+            ctx.fillStyle = color; ctx.font = '900 12px Inter'; ctx.textAlign = 'center';
+            ctx.fillText(label, x + btnW/2, y + btnH/2 + 5); ctx.restore();
+        };
+
+        drawBtn(startX, '←', '#00f2ff');
+        drawBtn(startX + (btnW + gap), '↻', '#bc13fe');
+        drawBtn(startX + (btnW + gap) * 2, '→', '#00f2ff');
+        drawBtn(startX + (btnW + gap) * 3, '↓', '#ff0077');
     }
 
     function drawBlock(ctx, x, y, colorIdx) { const s = BLOCK_SIZE; if (assetsLoaded && coloredBlockCache[colorIdx]) { ctx.drawImage(coloredBlockCache[colorIdx], x, y, s, s); } else { ctx.fillStyle = COLORS[colorIdx]; ctx.fillRect(x+1, y+1, s-2, s-2); } }
@@ -191,7 +213,29 @@
     });
 
     canvas.addEventListener('mousedown', () => { if (gameOver) init(); });
-    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); if (gameOver) init(); });
+
+    canvas.addEventListener('touchstart', (e) => { 
+        e.preventDefault(); 
+        if (gameOver) { init(); return; }
+        if (isPaused) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const t = e.touches[0];
+        const tx = t.clientX - rect.left, ty = t.clientY - rect.top;
+        
+        if (window.innerWidth < 768) {
+            const btnW = 60, gap = 15;
+            const startX = (canvas.width - (btnW * 4 + gap * 3)) / 2;
+            const y = canvas.height - 100;
+
+            if (ty > y && ty < y + btnW) {
+                if (tx > startX && tx < startX + btnW) playerMove(-1);
+                else if (tx > startX + (btnW + gap) && tx < startX + (btnW + gap) + btnW) playerRotate(1);
+                else if (tx > startX + (btnW + gap) * 2 && tx < startX + (btnW + gap) * 2 + btnW) playerMove(1);
+                else if (tx > startX + (btnW + gap) * 3 && tx < startX + (btnW + gap) * 3 + btnW) playerDrop();
+            }
+        }
+    }, {passive: false});
 
     playerReset(); requestAnimationFrame(update);
 })();

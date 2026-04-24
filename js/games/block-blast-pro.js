@@ -279,9 +279,8 @@
 
     function update(t) { if (window.gameStarted) draw(); requestAnimationFrame(update); }
 
-    canvas.addEventListener('mousedown', e => { 
+    function handleStart(mx, my) {
         if (gameOver) { resetGame(); return; }
-        const rect = canvas.getBoundingClientRect(); const mx = e.clientX - rect.left, my = e.clientY - rect.top;
         if (canvas.width >= 768) {
             const panelGap = 20; const sidePanelW = offsetX - panelGap * 2;
             const rightMidX = offsetX + (GRID_SIZE * BLOCK_SIZE) + panelGap + sidePanelW / 2;
@@ -290,16 +289,18 @@
                 challengeMode = !challengeMode; resetGame(); shake = 30; return;
             }
         }
-        const isMobile = canvas.width < 768;
+        const isMobile = window.innerWidth < 768;
         const poolY = isMobile ? canvas.height - 120 : offsetY + GRID_SIZE * BLOCK_SIZE + 40;
         shapesPool.forEach((s, i) => {
             if (s.used) return;
             const sx = offsetX + (i * (GRID_SIZE * BLOCK_SIZE / 3)) + (GRID_SIZE * BLOCK_SIZE / 6) - (s.matrix[0].length * BLOCK_SIZE * 0.25);
             if (mx > sx - 40 && mx < sx + 100 && my > poolY - 40 && my < poolY + 100) { selectedShape = s; dragPos = { x: mx, y: my }; }
         });
-    });
-    window.addEventListener('mousemove', e => { if (selectedShape) { const rect = canvas.getBoundingClientRect(); dragPos = { x: e.clientX - rect.left, y: e.clientY - rect.top }; } });
-    window.addEventListener('mouseup', () => {
+    }
+
+    function handleMove(mx, my) { if (selectedShape) dragPos = { x: mx, y: my }; }
+
+    function handleEnd() {
         if (selectedShape) {
             const dropY = dragPos.y - 70;
             const c = Math.round((dragPos.x - offsetX - (selectedShape.matrix[0].length * BLOCK_SIZE / 2)) / BLOCK_SIZE);
@@ -309,7 +310,26 @@
             }
             selectedShape = null;
         }
+    }
+
+    canvas.addEventListener('mousedown', e => { 
+        const rect = canvas.getBoundingClientRect(); handleStart(e.clientX - rect.left, e.clientY - rect.top);
     });
+    window.addEventListener('mousemove', e => { 
+        const rect = canvas.getBoundingClientRect(); handleMove(e.clientX - rect.left, e.clientY - rect.top);
+    });
+    window.addEventListener('mouseup', handleEnd);
+
+    canvas.addEventListener('touchstart', e => {
+        e.preventDefault(); const rect = canvas.getBoundingClientRect(); const t = e.touches[0];
+        handleStart(t.clientX - rect.left, t.clientY - rect.top);
+    }, {passive: false});
+    window.addEventListener('touchmove', e => {
+        if (selectedShape) e.preventDefault();
+        const rect = canvas.getBoundingClientRect(); const t = e.touches[0];
+        handleMove(t.clientX - rect.left, t.clientY - rect.top);
+    }, {passive: false});
+    window.addEventListener('touchend', handleEnd);
 
     window.addEventListener('resize', resize); resize(); generateShapes(); requestAnimationFrame(update);
 })();
