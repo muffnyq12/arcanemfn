@@ -741,7 +741,23 @@ padding: 0 20px; */
         display: flex !important;
     }
     .game-viewport {
-        aspect-ratio: 4 / 3;
+        aspect-ratio: auto;
+        height: 65vh; /* Reduced height for better phone fitting */
+        max-height: 550px;
+        margin: 0 -10px; /* Slight bleed for better immersion */
+        border-radius: 0; /* Full width look on mobile */
+        border-left: none;
+        border-right: none;
+    }
+    .game-header {
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    .game-header h1 {
+        font-size: 1.4rem !important;
+    }
+    .game-header p {
+        font-size: 0.8rem !important;
     }
 }
 

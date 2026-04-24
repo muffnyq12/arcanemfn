@@ -202,6 +202,20 @@
         checkMatches();
     }
 
+    function hasMatch() {
+        for (let r = 0; r < GRID_SIZE; r++) {
+            for (let c = 0; c < GRID_SIZE - 2; c++) {
+                if (grid[r][c] && grid[r][c] === grid[r][c+1] && grid[r][c] === grid[r][c+2]) return true;
+            }
+        }
+        for (let c = 0; c < GRID_SIZE; c++) {
+            for (let r = 0; r < GRID_SIZE - 2; r++) {
+                if (grid[r][c] && grid[r][c] === grid[r+1][c] && grid[r][c] === grid[r+2][c]) return true;
+            }
+        }
+        return false;
+    }
+
     function handleInteraction(e) {
         if (gameOver || isProcessing || isPaused) return;
         const rect = canvas.getBoundingClientRect();
@@ -210,9 +224,29 @@
         const boardW = GRID_SIZE * CELL_SIZE, boardH = GRID_SIZE * CELL_SIZE;
         const offsetX = (canvas.width - boardW) / 2, offsetY = (canvas.height - boardH) / 2;
         const c = Math.floor((x - offsetX) / CELL_SIZE), r = Math.floor((y - offsetY) / CELL_SIZE);
+        
         if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
-            if (!selected) selected = { r, c };
-            else { if (Math.abs(selected.r - r) + Math.abs(selected.c - c) === 1) { const temp = grid[r][c]; grid[r][c] = grid[selected.r][selected.c]; grid[selected.r][selected.c] = temp; selected = null; checkMatches(); } else selected = { r, c }; }
+            if (!selected) {
+                selected = { r, c };
+            } else {
+                if (Math.abs(selected.r - r) + Math.abs(selected.c - c) === 1) {
+                    const temp = grid[r][c];
+                    grid[r][c] = grid[selected.r][selected.c];
+                    grid[selected.r][selected.c] = temp;
+                    
+                    if (hasMatch()) {
+                        selected = null;
+                        checkMatches();
+                    } else {
+                        // Swap back if no match
+                        grid[selected.r][selected.c] = grid[r][c];
+                        grid[r][c] = temp;
+                        selected = null;
+                    }
+                } else {
+                    selected = { r, c };
+                }
+            }
         }
     }
 
