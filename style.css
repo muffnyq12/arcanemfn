@@ -722,7 +722,14 @@ nav {
     height: 80px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
+    /* Mobile Specific Controls    function drawMobileControls() {
+        if (window.innerWidth >= 1025) return; // Tablets are up to 1024px
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    padding: 0 20px; */
     .hero h1 { font-size: 2.5rem; }
     .hero p { font-size: 1.1rem; }
     .game-details { grid-template-columns: 1fr; }
@@ -981,7 +988,7 @@ nav {
     font-size: 0.8rem;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .footer-grid { grid-template-columns: 1fr; gap: 2rem; }
     .newsletter-form { flex-direction: column; }
 }
@@ -1147,7 +1154,7 @@ nav {
     gap: 10px;
 }
 /* --- GLOBAL MOBILE RESPONSIVENESS --- */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     /* Header & Nav */
     .nav-content {
         flex-direction: column;
@@ -1239,6 +1246,7 @@ nav {
     }
 
     .info-panel h3 {
+        const isMobile = window.innerWidth <= 1024;
         font-size: 1rem !important;
         margin-bottom: 0.8rem !important;
     }
@@ -1451,7 +1459,7 @@ nav {
 /* ============================================================
    MOBILE OPTIMIZATION PASS (PREMIUM MOBILE UX)
    ============================================================ */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     :root { --container-pad: 15px; }
     .container { padding: 0 var(--container-pad); }
     

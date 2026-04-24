@@ -232,7 +232,7 @@
     }
 
     function drawMobileControls() {
-        if (window.innerWidth >= 768) return; // Use innerWidth for reliable mobile check
+        if (window.innerWidth >= 1025) return;
 
         // Joystick (Left)
         const jX = 100, jY = canvas.height - 100, jR = 60;

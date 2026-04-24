@@ -289,7 +289,7 @@
                 challengeMode = !challengeMode; resetGame(); shake = 30; return;
             }
         }
-        const isMobile = window.innerWidth < 768;
+        const isMobile = window.innerWidth <= 1024;
         const poolY = isMobile ? canvas.height - 120 : offsetY + GRID_SIZE * BLOCK_SIZE + 40;
         shapesPool.forEach((s, i) => {
             if (s.used) return;

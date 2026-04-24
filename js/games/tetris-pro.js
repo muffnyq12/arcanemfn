@@ -171,7 +171,7 @@
     }
 
     function drawMobileControls() {
-        if (window.innerWidth >= 768) return;
+        if (window.innerWidth >= 1025) return;
         const btnW = 60, btnH = 60, gap = 15;
         const startX = (canvas.width - (btnW * 4 + gap * 3)) / 2;
         const y = canvas.height - 100;
@@ -223,7 +223,7 @@
         const t = e.touches[0];
         const tx = t.clientX - rect.left, ty = t.clientY - rect.top;
         
-        if (window.innerWidth < 768) {
+        if (window.innerWidth <= 1024) {
             const btnW = 60, gap = 15;
             const startX = (canvas.width - (btnW * 4 + gap * 3)) / 2;
             const y = canvas.height - 100;
