@@ -239,24 +239,27 @@
         }
         if (document.getElementById('asteroid-mobile-ctrl')) return;
 
-        const container = document.createElement('div');
-        container.id = 'asteroid-mobile-ctrl';
-        container.style = 'position:fixed; bottom:0; left:0; width:100%; height:200px; z-index:1000; pointer-events:none;';
+        const container = document.getElementById('game-canvas-container');
+        if (!container) return;
         
-        container.innerHTML = `
-            <div id="joystick-base" style="position:absolute; bottom:40px; left:40px; width:120px; height:120px; background:rgba(0,0,0,0.4); border:2px solid #00f2ff; border-radius:50%; pointer-events:auto;">
-                <div id="joystick-handle" style="position:absolute; top:35px; left:35px; width:50px; height:50px; background:#00f2ff; border-radius:50%; transition: transform 0.1s;"></div>
+        const ctrlDiv = document.createElement('div');
+        ctrlDiv.id = 'asteroid-mobile-ctrl';
+        ctrlDiv.style = 'position:absolute; bottom:0; left:0; width:100%; height:100%; z-index:9999; pointer-events:none;';
+        
+        ctrlDiv.innerHTML = `
+            <div id="joystick-base" style="position:absolute; bottom:60px; left:60px; width:140px; height:140px; background:rgba(0,0,0,0.5); border:3px solid #00f2ff; border-radius:50%; pointer-events:auto; touch-action:none;">
+                <div id="joystick-handle" style="position:absolute; top:40px; left:40px; width:60px; height:60px; background:#00f2ff; border-radius:50%; box-shadow:0 0 15px #00f2ff;"></div>
             </div>
-            <button id="ast-fire" style="position:absolute; bottom:40px; right:40px; width:100px; height:100px; background:rgba(255,0,119,0.2); border:4px solid #ff0077; border-radius:50%; color:#fff; font-weight:900; pointer-events:auto; touch-action:manipulation; box-shadow:0 0 20px rgba(255,0,119,0.4);">FIRE</button>
+            <button id="ast-fire" style="position:absolute; bottom:60px; right:60px; width:120px; height:120px; background:rgba(255,0,119,0.3); border:4px solid #ff0077; border-radius:50%; color:#fff; font-weight:900; font-size:24px; pointer-events:auto; touch-action:manipulation; box-shadow:0 0 25px rgba(255,0,119,0.6); text-shadow:0 0 5px #000;">ATEŞ</button>
         `;
         
-        document.body.appendChild(container);
+        container.appendChild(ctrlDiv);
 
         const base = document.getElementById('joystick-base');
         const handle = document.getElementById('joystick-handle');
         const fireBtn = document.getElementById('ast-fire');
 
-        const handleMove = (e) => {
+        const updateJoystick = (e) => {
             e.preventDefault();
             const t = e.touches[0];
             const rect = base.getBoundingClientRect();
@@ -265,24 +268,25 @@
             let dx = t.clientX - centerX;
             let dy = t.clientY - centerY;
             const dist = Math.sqrt(dx*dx + dy*dy);
-            const maxDist = 50;
+            const maxDist = 60;
 
             if (dist > maxDist) { dx *= maxDist / dist; dy *= maxDist / dist; }
             handle.style.transform = `translate(${dx}px, ${dy}px)`;
 
-            mobileInput.left = dx < -20;
-            mobileInput.right = dx > 20;
-            mobileInput.thrust = dy < -20;
+            mobileInput.left = dx < -25;
+            mobileInput.right = dx > 25;
+            mobileInput.thrust = dy < -25;
         };
 
-        const handleEnd = () => {
+        const resetJoystick = () => {
             handle.style.transform = 'translate(0, 0)';
             mobileInput.left = false; mobileInput.right = false; mobileInput.thrust = false;
         };
 
-        base.addEventListener('touchstart', handleMove, {passive:false});
-        base.addEventListener('touchmove', handleMove, {passive:false});
-        base.addEventListener('touchend', handleEnd);
+        base.addEventListener('touchstart', updateJoystick, {passive:false});
+        base.addEventListener('touchmove', updateJoystick, {passive:false});
+        base.addEventListener('touchend', resetJoystick);
+        base.addEventListener('touchcancel', resetJoystick);
 
         fireBtn.addEventListener('touchstart', (e) => { e.preventDefault(); mobileInput.fire = true; shoot(); }, {passive:false});
         fireBtn.addEventListener('touchend', () => { mobileInput.fire = false; });

@@ -171,7 +171,6 @@
     }
 
     function drawMobileControls() {
-        // We'll use HTML buttons for 100% reliability instead of drawing on canvas
         if (window.innerWidth > 1024) {
             const old = document.getElementById('tetris-mobile-ctrl');
             if (old) old.remove();
@@ -179,30 +178,62 @@
         }
         if (document.getElementById('tetris-mobile-ctrl')) return;
 
-        const container = document.createElement('div');
-        container.id = 'tetris-mobile-ctrl';
-        container.style = 'position:fixed; bottom:20px; left:50%; transform:translateX(-50%); display:flex; gap:10px; z-index:1000; pointer-events:auto;';
+        const container = document.getElementById('game-canvas-container');
+        if (!container) return;
+
+        const ctrlDiv = document.createElement('div');
+        ctrlDiv.id = 'tetris-mobile-ctrl';
+        ctrlDiv.style = 'position:absolute; top:0; left:0; width:100%; height:100%; z-index:9999; pointer-events:none;';
         
-        const btnStyle = 'width:60px; height:60px; background:rgba(0,0,0,0.8); border:2px solid #00f2ff; border-radius:12px; color:#fff; font-weight:900; font-size:20px; display:flex; align-items:center; justify-content:center; touch-action:manipulation;';
-        
-        container.innerHTML = `
-            <button id="t-left" style="${btnStyle} border-color:#00f2ff;">←</button>
-            <button id="t-rot" style="${btnStyle} border-color:#bc13fe;">↻</button>
-            <button id="t-right" style="${btnStyle} border-color:#00f2ff;">→</button>
-            <button id="t-drop" style="${btnStyle} border-color:#ff0077;">↓</button>
+        ctrlDiv.innerHTML = `
+            <div id="t-drag-area" style="position:absolute; top:0; left:0; width:100%; height:80%; pointer-events:auto; touch-action:none;"></div>
+            <button id="t-rot-btn" style="position:absolute; top:20px; right:20px; width:80px; height:80px; background:rgba(188,19,254,0.3); border:3px solid #bc13fe; border-radius:50%; color:#fff; font-weight:900; font-size:14px; pointer-events:auto; touch-action:manipulation; box-shadow:0 0 20px rgba(188,19,254,0.5);">DÖNDÜR</button>
+            <div style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); color:rgba(255,255,255,0.4); font-size:10px; font-weight:bold; pointer-events:none;">SÜRÜKLE: HAREKET | TIKLA: DÜŞÜR</div>
         `;
         
-        document.body.appendChild(container);
+        container.appendChild(ctrlDiv);
 
-        const setupBtn = (id, fn) => {
-            const btn = document.getElementById(id);
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); fn(); }, {passive:false});
-        };
+        const dragArea = document.getElementById('t-drag-area');
+        const rotBtn = document.getElementById('t-rot-btn');
 
-        setupBtn('t-left', () => playerMove(-1));
-        setupBtn('t-rot', () => playerRotate(1));
-        setupBtn('t-right', () => playerMove(1));
-        setupBtn('t-drop', () => playerDrop());
+        let lastX = -1;
+        let touchStartTime = 0;
+        let startX = 0, startY = 0;
+
+        dragArea.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const t = e.touches[0];
+            startX = t.clientX; startY = t.clientY;
+            touchStartTime = Date.now();
+        }, {passive:false});
+
+        dragArea.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const t = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const relX = t.clientX - rect.left;
+            
+            // Calculate which column (0 to board width)
+            const col = Math.floor((relX - offsetX) / BLOCK_SIZE);
+            if (col >= 0 && col < board[0].length && col !== player.pos.x) {
+                const diff = col - player.pos.x;
+                playerMove(diff);
+            }
+        }, {passive:false});
+
+        dragArea.addEventListener('touchend', (e) => {
+            const t = e.changedTouches[0];
+            const duration = Date.now() - touchStartTime;
+            const dist = Math.sqrt((t.clientX - startX)**2 + (t.clientY - startY)**2);
+
+            if (duration < 250 && dist < 15) {
+                // IT'S A TAP -> HARD DROP
+                while(!collide(board, player)) player.pos.y++;
+                player.pos.y--; merge(board, player); playerReset(); arenaSweep();
+            }
+        });
+
+        rotBtn.addEventListener('touchstart', (e) => { e.preventDefault(); playerRotate(1); }, {passive:false});
     }
 
     function drawBlock(ctx, x, y, colorIdx) { const s = BLOCK_SIZE; if (assetsLoaded && coloredBlockCache[colorIdx]) { ctx.drawImage(coloredBlockCache[colorIdx], x, y, s, s); } else { ctx.fillStyle = COLORS[colorIdx]; ctx.fillRect(x+1, y+1, s-2, s-2); } }
