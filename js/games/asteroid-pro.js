@@ -239,7 +239,16 @@
             if (old) old.remove();
             return;
         }
-        if (document.getElementById('asteroid-mobile-ctrl')) return;
+
+        const ctrl = document.getElementById('asteroid-mobile-ctrl');
+        if (!window.gameStarted) {
+            if (ctrl) ctrl.style.display = 'none';
+            return;
+        } else {
+            if (ctrl) ctrl.style.display = 'block';
+        }
+        
+        if (ctrl) return;
 
         const container = document.getElementById('game-canvas-container');
         if (!container) return;
@@ -280,15 +289,16 @@
             mobileInput.thrust = dy < -25;
         };
 
-        const resetJoystick = () => {
+        const resetJoystick = (e) => {
+            if (e) e.preventDefault();
             handle.style.transform = 'translate(0, 0)';
             mobileInput.left = false; mobileInput.right = false; mobileInput.thrust = false;
         };
 
         base.addEventListener('touchstart', updateJoystick, {passive:false});
         base.addEventListener('touchmove', updateJoystick, {passive:false});
-        base.addEventListener('touchend', resetJoystick);
-        base.addEventListener('touchcancel', resetJoystick);
+        base.addEventListener('touchend', resetJoystick, {passive:false});
+        base.addEventListener('touchcancel', resetJoystick, {passive:false});
 
         fireBtn.addEventListener('touchstart', (e) => { e.preventDefault(); mobileInput.fire = true; shoot(); }, {passive:false});
         fireBtn.addEventListener('touchend', () => { mobileInput.fire = false; });

@@ -178,7 +178,16 @@
             if (old) old.remove();
             return;
         }
-        if (document.getElementById('tetris-mobile-ctrl')) return;
+        
+        const ctrl = document.getElementById('tetris-mobile-ctrl');
+        if (!window.gameStarted) {
+            if (ctrl) ctrl.style.display = 'none';
+            return;
+        } else {
+            if (ctrl) ctrl.style.display = 'block';
+        }
+
+        if (ctrl) return;
 
         const container = document.getElementById('game-canvas-container');
         if (!container) return;
@@ -189,7 +198,7 @@
         
         ctrlDiv.innerHTML = `
             <div id="t-drag-area" style="position:absolute; top:0; left:0; width:100%; height:80%; pointer-events:auto; touch-action:none;"></div>
-            <button id="t-rot-btn" style="position:absolute; top:20px; right:20px; width:80px; height:80px; background:rgba(188,19,254,0.3); border:3px solid #bc13fe; border-radius:50%; color:#fff; font-weight:900; font-size:14px; pointer-events:auto; touch-action:manipulation; box-shadow:0 0 20px rgba(188,19,254,0.5);">DÖNDÜR</button>
+            <button id="t-rot-btn" style="position:absolute; top:20px; right:20px; width:80px; height:80px; background:rgba(188,19,254,0.3); border:3px solid #bc13fe; border-radius:50%; color:#fff; font-weight:900; font-size:14px; pointer-events:auto; touch-action:manipulation; box-shadow:0 0 20px rgba(188,19,254,0.5); z-index:10000;">DÖNDÜR</button>
             <div style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); color:rgba(255,255,255,0.4); font-size:10px; font-weight:bold; pointer-events:none;">SÜRÜKLE: HAREKET | TIKLA: DÜŞÜR</div>
         `;
         
