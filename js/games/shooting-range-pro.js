@@ -280,6 +280,25 @@
         if (!gameActive || isPaused) return; 
         fire(); 
     });
+
+    canvas.addEventListener('touchstart', e => {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const t = e.touches[0];
+        crosshair.x = t.clientX - rect.left;
+        crosshair.y = t.clientY - rect.top;
+        if (gameOver) { init(isChallengeMode ? 'challenge' : 'standard'); return; }
+        if (!gameActive || isPaused) return;
+        fire();
+    }, {passive: false});
+
+    canvas.addEventListener('touchmove', e => {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const t = e.touches[0];
+        crosshair.x = t.clientX - rect.left;
+        crosshair.y = t.clientY - rect.top;
+    }, {passive: false});
     window.addEventListener('keydown', e => { if (e.key === 'r' || e.key === 'R') reload(); });
 
     requestAnimationFrame(update);

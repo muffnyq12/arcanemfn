@@ -171,23 +171,38 @@
     }
 
     function drawMobileControls() {
-        if (window.innerWidth >= 1025) return;
-        const btnW = 60, btnH = 60, gap = 15;
-        const startX = (canvas.width - (btnW * 4 + gap * 3)) / 2;
-        const y = canvas.height - 100;
+        // We'll use HTML buttons for 100% reliability instead of drawing on canvas
+        if (window.innerWidth > 1024) {
+            const old = document.getElementById('tetris-mobile-ctrl');
+            if (old) old.remove();
+            return;
+        }
+        if (document.getElementById('tetris-mobile-ctrl')) return;
 
-        const drawBtn = (x, label, color) => {
-            ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.strokeStyle = color; ctx.lineWidth = 2;
-            ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, btnW, btnH, 8); else ctx.rect(x, y, btnW, btnH);
-            ctx.fill(); ctx.stroke();
-            ctx.fillStyle = color; ctx.font = '900 12px Inter'; ctx.textAlign = 'center';
-            ctx.fillText(label, x + btnW/2, y + btnH/2 + 5); ctx.restore();
+        const container = document.createElement('div');
+        container.id = 'tetris-mobile-ctrl';
+        container.style = 'position:fixed; bottom:20px; left:50%; transform:translateX(-50%); display:flex; gap:10px; z-index:1000; pointer-events:auto;';
+        
+        const btnStyle = 'width:60px; height:60px; background:rgba(0,0,0,0.8); border:2px solid #00f2ff; border-radius:12px; color:#fff; font-weight:900; font-size:20px; display:flex; align-items:center; justify-content:center; touch-action:manipulation;';
+        
+        container.innerHTML = `
+            <button id="t-left" style="${btnStyle} border-color:#00f2ff;">←</button>
+            <button id="t-rot" style="${btnStyle} border-color:#bc13fe;">↻</button>
+            <button id="t-right" style="${btnStyle} border-color:#00f2ff;">→</button>
+            <button id="t-drop" style="${btnStyle} border-color:#ff0077;">↓</button>
+        `;
+        
+        document.body.appendChild(container);
+
+        const setupBtn = (id, fn) => {
+            const btn = document.getElementById(id);
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); fn(); }, {passive:false});
         };
 
-        drawBtn(startX, '←', '#00f2ff');
-        drawBtn(startX + (btnW + gap), '↻', '#bc13fe');
-        drawBtn(startX + (btnW + gap) * 2, '→', '#00f2ff');
-        drawBtn(startX + (btnW + gap) * 3, '↓', '#ff0077');
+        setupBtn('t-left', () => playerMove(-1));
+        setupBtn('t-rot', () => playerRotate(1));
+        setupBtn('t-right', () => playerMove(1));
+        setupBtn('t-drop', () => playerDrop());
     }
 
     function drawBlock(ctx, x, y, colorIdx) { const s = BLOCK_SIZE; if (assetsLoaded && coloredBlockCache[colorIdx]) { ctx.drawImage(coloredBlockCache[colorIdx], x, y, s, s); } else { ctx.fillStyle = COLORS[colorIdx]; ctx.fillRect(x+1, y+1, s-2, s-2); } }
@@ -212,29 +227,9 @@
         if (e.keyCode === 37) playerMove(-1); else if (e.keyCode === 39) playerMove(1); else if (e.keyCode === 40) playerDrop(); else if (e.keyCode === 38) playerRotate(1); else if (e.keyCode === 32) { while(!collide(board, player)) player.pos.y++; player.pos.y--; merge(board, player); playerReset(); arenaSweep(); }
     });
 
-    canvas.addEventListener('mousedown', () => { if (gameOver) init(); });
-
     canvas.addEventListener('touchstart', (e) => { 
         e.preventDefault(); 
         if (gameOver) { init(); return; }
-        if (isPaused) return;
-
-        const rect = canvas.getBoundingClientRect();
-        const t = e.touches[0];
-        const tx = t.clientX - rect.left, ty = t.clientY - rect.top;
-        
-        if (window.innerWidth <= 1024) {
-            const btnW = 60, gap = 15;
-            const startX = (canvas.width - (btnW * 4 + gap * 3)) / 2;
-            const y = canvas.height - 100;
-
-            if (ty > y && ty < y + btnW) {
-                if (tx > startX && tx < startX + btnW) playerMove(-1);
-                else if (tx > startX + (btnW + gap) && tx < startX + (btnW + gap) + btnW) playerRotate(1);
-                else if (tx > startX + (btnW + gap) * 2 && tx < startX + (btnW + gap) * 2 + btnW) playerMove(1);
-                else if (tx > startX + (btnW + gap) * 3 && tx < startX + (btnW + gap) * 3 + btnW) playerDrop();
-            }
-        }
     }, {passive: false});
 
     playerReset(); requestAnimationFrame(update);
